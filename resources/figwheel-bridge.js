@@ -5,6 +5,7 @@
  */
 
 var CLOSURE_UNCOMPILED_DEFINES = null;
+var debugEnabled = false;
 
 var config = {
     basePath: "target/",
@@ -59,13 +60,19 @@ var figwheelApp = function (platform, devHost) {
     })
 };
 
+function logDebug(msg) {
+    if (debugEnabled) {
+        console.log(msg);
+    }
+}
+
 // evaluates js code ensuring proper ordering
 function customEval(url, javascript, success, error) {
     if (scriptQueue.length > 0) {
         if (scriptQueue[0] === url) {
             try {
                 evaluate(javascript);
-                console.info('Evaluated: ' + url);
+                logDebug('Evaluated: ' + url);
                 scriptQueue.shift();
                 evalListeners.forEach(function (listener) {
                     listener(url)
@@ -92,7 +99,7 @@ var isChrome = function () {
 };
 
 function asyncImportScripts(url, success, error) {
-    console.info('(asyncImportScripts) Importing: ' + url);
+    logDebug('(asyncImportScripts) Importing: ' + url);
     scriptQueue.push(url);
     fetch(url)
         .then(function (response) {
@@ -111,7 +118,7 @@ function asyncImportScripts(url, success, error) {
 function syncImportScripts(url, success, error) {
     try {
         importScripts(url);
-        console.info('Evaluated: ' + url);
+        logDebug('Evaluated: ' + url);
         evalListeners.forEach(function (listener) {
             listener(url)
         });
@@ -134,7 +141,7 @@ function importJs(src, success, error) {
 
     var file = fileBasePath + '/' + src;
 
-    console.info('(importJs) Importing: ' + file);
+    logDebug('(importJs) Importing: ' + file);
     if (isChrome()) {
         syncImportScripts(serverBaseUrl("localhost") + '/' + file, success, error);
     } else {
@@ -185,12 +192,12 @@ function loadApp(platform, devHost, onLoadCb) {
     evalListeners.push(function (url) {
         if (url.indexOf(mainJs) > -1) {
             onLoadCb(env[platform].main.root_el);
-            console.log('Done loading Clojure app');
+            console.info('Done loading Clojure app');
         }
     });
 
     if (typeof goog === "undefined") {
-        console.log('Loading Closure base.');
+        console.info('Loading Closure base.');
         interceptRequire();
         compileWarningsToYellowBox();
         importJs('goog/base.js', function () {
