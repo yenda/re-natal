@@ -167,6 +167,7 @@ It looks like Figwheel reloads are faster if Hot Moduler Reload is OFF.
 Also, no need packager to watch for changed files - Figwheel does that.
 
 Two things you can do:
+
 1. Turn off HMR from the development menu.
 2. Start packager with option `--nonPersistent`. You can use `npm start` for that.
 
