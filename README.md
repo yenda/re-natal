@@ -23,7 +23,7 @@ For more ClojureScript React Native resources visit [cljsrn.org](http://cljsrn.o
 Contributions are welcome.
 
 ## State
-- Uses React Native v0.21.0
+- Uses React Native v0.22.0
 - Same codebase for iOS and Android
 - Figwheel used for REPL and live coding.
   - Works in iOS (real device and simulator).
@@ -158,6 +158,17 @@ $ re-natal use-figwheel
 $ lein figwheel ios android
 ```
 Then start iOS app from xcode, and Android by executing `react-native run-android`
+
+#### Faster Figwheel hot reloading
+Since version 0.22.0 React Native supports Hot Module Reload. But at least for now, this feature is useless
+as Figwheel is doing that as good.
+
+It looks like Figwheel reloads are faster if Hot Moduler Reload is OFF.
+Also, no need packager to watch for changed files - Figwheel does that.
+
+Two things you can do:
+1. Turn off HMR from the development menu.
+2. Start packager with option `--nonPersistent`. You can use `npm start` for that.
 
 #### Starting Figwheel REPL from nREPL
 To start Figwheel within nREPL session:

@@ -29,7 +29,7 @@ devHostRx       = /\$DEV_HOST\$/g
 ipAddressRx     = /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/i
 figwheelUrlRx   = /ws:\/\/[0-9a-zA-Z\.]*:/g
 appDelegateRx   = /http:\/\/[^:]+/g
-rnVersion       = '0.21.0'
+rnVersion       = '0.22.0'
 rnPackagerPort  = 8081
 process.title   = 're-natal'
 interfaceConf   =
@@ -363,7 +363,7 @@ init = (interfaceName, projName) ->
       version: '0.0.1'
       private: true
       scripts:
-        start: 'node_modules/react-native/packager/packager.sh'
+        start: 'node_modules/react-native/packager/packager.sh --nonPersistent'
       dependencies:
         'react-native': rnVersion
     , null, 2
