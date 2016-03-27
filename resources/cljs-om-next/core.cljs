@@ -5,7 +5,7 @@
             [re-natal.support :as sup]
             [$PROJECT_NAME_HYPHENATED$.state :as state]))
 
-(set! js/React (js/require "react-native"))
+(set! js/window.React (js/require "react-native"))
 
 (def app-registry (.-AppRegistry js/React))
 (def logo-img (js/require "./images/cljs.png"))

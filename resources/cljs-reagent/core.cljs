@@ -4,7 +4,7 @@
             [$PROJECT_NAME_HYPHENATED$.handlers]
             [$PROJECT_NAME_HYPHENATED$.subs]))
 
-(set! js/React (js/require "react-native"))
+(set! js/window.React (js/require "react-native"))
 
 (def app-registry (.-AppRegistry js/React))
 (def text (r/adapt-react-class (.-Text js/React)))
