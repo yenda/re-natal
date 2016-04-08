@@ -146,7 +146,7 @@ generateConfig = (interfaceName, projName) ->
     interface: interfaceName
     androidHost: "localhost"
     iosHost: "localhost"
-    devRoots: defaultEnvRoots
+    envRoots: defaultEnvRoots
     modules: []
     imageDirs: ["images"]
 
@@ -165,7 +165,7 @@ writeConfig = (config) ->
         message
 
 verifyConfig = (config) ->
-  if !config.androidHost? || !config.modules? || !config.imageDirs? || !config.interface? || !config.iosHost?
+  if !config.androidHost? || !config.modules? || !config.imageDirs? || !config.interface? || !config.iosHost? || !config.envRoots?
     throw new Error 're-natal project needs to be upgraded, please run: re-natal upgrade'
   config
 
