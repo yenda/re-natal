@@ -60,6 +60,9 @@ interfaceConf   =
     sampleCommand: '(swap! app-state assoc :app/msg "Hello Native World!")'
 interfaceNames   = Object.keys interfaceConf
 defaultInterface = 'reagent'
+defaultEnvRoots  =
+  dev: 'env/dev'
+  prod: 'env/prod'
 
 log = (s, color = 'green') ->
   console.log chalk[color] s
@@ -143,6 +146,7 @@ generateConfig = (interfaceName, projName) ->
     interface: interfaceName
     androidHost: "localhost"
     iosHost: "localhost"
+    devRoots: defaultEnvRoots
     modules: []
     imageDirs: ["images"]
 
@@ -239,15 +243,15 @@ configureDevHostForIosDevice = (deviceType) ->
   catch {message}
     logErr message
 
-copyDevEnvironmentFiles = (interfaceName, projNameHyph, projName, devHost) ->
-  fs.mkdirpSync "env/dev/env/ios"
-  fs.mkdirpSync "env/dev/env/android"
+copyDevEnvironmentFiles = (interfaceName, projNameHyph, projName, devEnvRoot, devHost) ->
+  fs.mkdirpSync "#{devEnvRoot}/env/ios"
+  fs.mkdirpSync "#{devEnvRoot}/env/android"
 
-  userNsPath = "env/dev/user.clj"
+  userNsPath = "#{devEnvRoot}/user.clj"
   fs.copySync("#{resources}/user.clj", userNsPath)
 
-  mainIosDevPath = "env/dev/env/ios/main.cljs"
-  mainAndroidDevPath = "env/dev/env/android/main.cljs"
+  mainIosDevPath = "#{devEnvRoot}/env/ios/main.cljs"
+  mainAndroidDevPath = "#{devEnvRoot}/env/android/main.cljs"
 
   cljsDir = interfaceConf[interfaceName].cljsDir
   fs.copySync("#{resources}/#{cljsDir}/main_dev.cljs", mainIosDevPath)
@@ -255,12 +259,12 @@ copyDevEnvironmentFiles = (interfaceName, projNameHyph, projName, devHost) ->
   fs.copySync("#{resources}/#{cljsDir}/main_dev.cljs", mainAndroidDevPath)
   edit mainAndroidDevPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName], [platformRx, "android"], [devHostRx, devHost]]
 
-copyProdEnvironmentFiles = (interfaceName, projNameHyph, projName) ->
-  fs.mkdirpSync "env/prod/env/ios"
-  fs.mkdirpSync "env/prod/env/android"
+copyProdEnvironmentFiles = (interfaceName, projNameHyph, projName, prodEnvRoot) ->
+  fs.mkdirpSync "#{prodEnvRoot}/env/ios"
+  fs.mkdirpSync "#{prodEnvRoot}/env/android"
 
-  mainIosProdPath = "env/prod/env/ios/main.cljs"
-  mainAndroidProdPath = "env/prod/env/android/main.cljs"
+  mainIosProdPath = "#{prodEnvRoot}/env/ios/main.cljs"
+  mainAndroidProdPath = "#{prodEnvRoot}/env/android/main.cljs"
 
   cljsDir = interfaceConf[interfaceName].cljsDir
   fs.copySync("#{resources}/#{cljsDir}/main_prod.cljs", mainIosProdPath)
@@ -349,10 +353,8 @@ init = (interfaceName, projName) ->
 
     copySrcFiles(interfaceName, projName, projNameUs, projNameHyph)
 
-    fs.mkdirSync "env"
-
-    copyDevEnvironmentFiles(interfaceName, projNameHyph, projName, "localhost")
-    copyProdEnvironmentFiles(interfaceName, projNameHyph, projName)
+    copyDevEnvironmentFiles(interfaceName, projNameHyph, projName, defaultEnvRoots.dev, "localhost")
+    copyProdEnvironmentFiles(interfaceName, projNameHyph, projName, defaultEnvRoots.prod)
 
     fs.copySync("#{resources}/images", "./images")
 
@@ -438,11 +440,11 @@ generateRequireModulesCode = (modules) ->
     jsCode += "modules['#{m}']=require('#{m}');";
   jsCode += '\n'
 
-updateFigwheelUrls = (androidHost, iosHost) ->
-  mainAndroidDevPath = "env/dev/env/android/main.cljs"
+updateFigwheelUrls = (devEnvRoot, androidHost, iosHost) ->
+  mainAndroidDevPath = "#{devEnvRoot}/env/android/main.cljs"
   edit mainAndroidDevPath, [[figwheelUrlRx, "ws://#{androidHost}:"]]
 
-  mainIosDevPath = "env/dev/env/ios/main.cljs"
+  mainIosDevPath = "#{devEnvRoot}/env/ios/main.cljs"
   edit mainIosDevPath, [[figwheelUrlRx, "ws://#{iosHost}:"]]
 
 updateIosAppDelegate = (projName, iosHost) ->
@@ -453,6 +455,7 @@ generateDevScripts = () ->
   try
     config = readConfig()
     projName = config.name
+    devEnvRoot = config.envRoots.dev
 
     depState = ckDeps.sync {install: false, verbose: false}
     if (!depState.depsWereOk)
@@ -476,7 +479,7 @@ generateDevScripts = () ->
     updateIosAppDelegate(projName, iosDevHost)
     log "AppDelegate.m was updated"
 
-    updateFigwheelUrls(androidDevHost, iosDevHost)
+    updateFigwheelUrls(devEnvRoot, androidDevHost, iosDevHost)
     log 'Dev server host for iOS: ' + iosDevHost
     log 'Dev server host for Android: ' + androidDevHost
 
@@ -488,7 +491,7 @@ generateDevScripts = () ->
         message
 
 doUpgrade = (config) ->
-  projName = config.name;
+  projName = config.name
   projNameHyph = projName.replace(camelRx, '$1-$2').toLowerCase()
   projNameUs   = toUnderscored projName
 
@@ -507,27 +510,21 @@ doUpgrade = (config) ->
   unless config.iosHost
     config.iosHost = "localhost"
 
+  unless config.envRoots
+    config.envRoots = defaultEnvRoots
+
   writeConfig(config)
   log 'upgraded .re-natal'
 
-  interfaceName = config.interface;
+  interfaceName = config.interface
+  envRoots = config.envRoots
 
-  copyDevEnvironmentFiles(interfaceName, projNameHyph, projName, "localhost")
-  copyProdEnvironmentFiles(interfaceName, projNameHyph, projName)
-  log 'upgraded files in env/'
+  copyDevEnvironmentFiles(interfaceName, projNameHyph, projName, envRoots.dev, "localhost")
+  copyProdEnvironmentFiles(interfaceName, projNameHyph, projName, envRoots.prod)
+  log "upgraded files in #{envRoots.dev} and #{envRoots.prod} "
 
   copyFigwheelBridge(projNameUs)
   log 'upgraded figwheel-bridge.js'
-
-  edit "src/#{projNameUs}/ios/core.cljs", [[/\^:figwheel-load\s/g, ""]]
-  edit "src/#{projNameUs}/android/core.cljs", [[/\^:figwheel-load\s/g, ""]]
-  log 'upgraded core.cljs'
-
-  edit '.gitignore', [[/^\s*env\/dev\s*$/m, ""]]
-  gignore = readFile '.gitignore'
-  if (!gignore.match /^\s*target\/\s*$/m)
-    fs.appendFileSync(".gitignore", "\ntarget/\n")
-  log 'upgraded .gitignore'
 
 useComponent = (name) ->
   log "Component '#{name}' is now configured for figwheel, please re-run 'use-figwheel' command to take effect"
