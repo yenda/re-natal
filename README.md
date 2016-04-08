@@ -39,7 +39,7 @@ Contributions are welcome.
 - [Unified way of using static images of rn 0.14+](https://facebook.github.io/react-native/docs/images.html) works
 - Works on Linux and Windows (Android only)
 
-## Usage
+## Creating new project
 
 Before getting started, make sure you have the
 [required dependencies](#dependencies) installed.
@@ -79,6 +79,8 @@ $ adb reverse tcp:8081 tcp:8081
 $ react-native run-android
 ```
 
+## Development with Figwheel
+
 Initially the ClojureScript is compiled in "prod" profile, meaning `index.*.js` files
 are compiled with `optimizations :simple`.
 Development in such mode is not fun because of slow compilation and long reload time.
@@ -86,7 +88,6 @@ Development in such mode is not fun because of slow compilation and long reload 
 Luckily, this can be improved by compiling with `optimizations :none` and using
 Figwheel.
 
-#### Using Figwheel in iOS simulator
 Start your app from Xcode and pick a simulator target, or just run `react-native run-ios`
 
 Then, to start development mode execute commands:
@@ -96,14 +97,48 @@ $ lein figwheel ios
 ```
 This will generate index.ios.js and index.android.js which works with compiler mode`optimizations :none`.
 
-#### Using Figwheel in real iOS device
+NOTE: you might need to restart react native packager and reload your app in simulator.
+
+If all went well you should see REPL prompt and changes in source files
+should be hot-loaded by Figwheel.
+
+#### Using external React Native Components
+
+Lets say you have installed an external library from npm like this:
+```
+$ npm i some-library --save
+```
+
+And you want to use a component called 'some-library/Component':
+```clojure
+(def Component (js/require "some-library/Component"))
+```
+This would work when you do `lein prod-build` and run your app, but will fail when you run with figwheel.
+React Native packager statically scans for all calls to `require` function and prepares the required
+code to be available at runtime. But, dynamically loaded (by figwheel) code bypass this scan
+and therefore require of custom component fails.
+
+To overcome this execute command:
+```
+$ re-natal use-component some-library/Component
+```
+Then, regenerate index.\*.js files:
+```
+$ re-natal use-figwheel
+```
+And last thing, probably, you will have to restart the packager and reload your app.
+
+NOTE: if you mistyped something, or no longer use the component and would like to remove it,
+please, manually open .re-natal file and fix it there (its just a list of names in json format, so should be straight forward)
+
+#### Using real iOS device
 
 Switch to using your iOS device: `re-natal use-ios-device real`.
 If this doesn't correctly detect your computer's IP you can pass your IP address explicitly: `re-natal use-ios-device IP`
 
 Then follow the remaining directions above for the iOS simulator except pick your connected device in Xcode
 
-#### Using Figwheel in real Android device
+#### Using real Android device
 To run figwheel with real Android device please read [Running on Device](https://facebook.github.io/react-native/docs/running-on-device-android.html#content).
 To make it work on USB connected device I had also to do the following:
 ```
@@ -119,7 +154,7 @@ And deploy your app:
 ```
 $ react-native run-android
 ```
-#### Using Figwheel in Genymotion simulator
+#### Using Genymotion simulator
 With genymotion Android simulator you have to use IP "10.0.3.2" in urls to refer to your local machine.
 To specify this use:
 ```
@@ -132,7 +167,7 @@ Start your simulator and deploy your app:
 $ react-native run-android
 ```
 
-#### Using Figwheel in stock Android emulator (AVD)
+#### Using stock Android emulator (AVD)
 With stock Android emulator you have to use IP "10.0.2.2" in urls to refer to your local machine.
 To specify this use:
 ```
@@ -223,35 +258,6 @@ It will clean and rebuild index.ios.js and index.android.js with `optimizations 
 
 Having index.ios.js and index.android.js build this way, you should be able to
 follow the RN docs to proceed with the release.
-
-## Using external React Native Components
-
-Lets say you have installed an external library from npm like this:
-```
-$ npm i some-library --save
-```
-
-And you want to use a component called 'some-library/Component':
-```clojure
-(def Component (js/require "some-library/Component"))
-```
-This would work when you do `lein prod-build` and run your app, but will fail when you run with figwheel.
-React Native packager statically scans for all calls to `require` function and prepares the required
-code to be available at runtime. But, dynamically loaded (by figwheel) code bypass this scan
-and therefore require of custom component fails.
-
-To overcome this execute command:
-```
-$ re-natal use-component some-library/Component
-```
-Then, regenerate index.\*.js files:
-```
-$ re-natal use-figwheel
-```
-And last thing, probably, you will have to restart the packager and refresh your app.
-
-NOTE: if you mistyped something, or no longer use the component and would like to remove it,
-please, manually open .re-natal file and fix it there (its just a list of names in json format, so should be straight forward)
 
 ## Static Images
 Since version 0.14 React Native supports a [unified way of referencing static images](https://facebook.github.io/react-native/docs/images.html)
