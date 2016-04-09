@@ -55,10 +55,10 @@ To bootstrap a new app, run `re-natal init` with your app's name as an argument:
 ```
 $ re-natal init FutureApp
 ```
-Or, for Om.Next project:
+Or, specify -i option to generate Om.Next or Reagent v0.6 project:
 
 ```
-$ re-natal init FutureApp -i om-next
+$ re-natal init FutureApp -i [om-next | reagent6]
 ```
 
 If your app's name is more than a single word, be sure to type it in CamelCase.
