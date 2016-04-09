@@ -46,6 +46,19 @@ interfaceConf   =
     shims:     ["cljsjs.react"]
     sampleCommandNs: '(in-ns \'$PROJECT_NAME_HYPHENATED$.ios.core)'
     sampleCommand: '(dispatch [:set-greeting "Hello Native World!"])'
+  'reagent6':
+    cljsDir: "cljs-reagent6"
+    sources:
+      ios:     ["core.cljs"]
+      android: ["core.cljs"]
+      common:  ["handlers.cljs", "subs.cljs", "db.cljs"]
+      other:   [["reagent_dom.cljs","reagent/dom.cljs"], ["reagent_dom_server.cljs","reagent/dom/server.cljs"]]
+    deps:      ['[reagent "0.6.0-alpha" :exclusions [cljsjs/react cljsjs/react-dom cljsjs/react-dom-server]]'
+      '[re-frame "0.7.0"]'
+      '[prismatic/schema "1.0.4"]']
+    shims:     ["cljsjs.react", "cljsjs.react.dom", "cljsjs.react.dom.server"]
+    sampleCommandNs: '(in-ns \'$PROJECT_NAME_HYPHENATED$.ios.core)'
+    sampleCommand: '(dispatch [:set-greeting "Hello Native World!"])'
   'om-next':
     cljsDir: "cljs-om-next"
     sources:
@@ -435,7 +448,7 @@ openXcode = (name) ->
         message
 
 generateRequireModulesCode = (modules) ->
-  jsCode = "var modules={'react-native': require('react-native')};"
+  jsCode = "var modules={'react-native': require('react-native'), 'react': require('react')};"
   for m in modules
     jsCode += "modules['#{m}']=require('#{m}');";
   jsCode += '\n'
