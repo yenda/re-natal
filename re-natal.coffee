@@ -494,10 +494,8 @@ generateDevScripts = () ->
     log 'index.android.js was regenerated'
 
     updateIosAppDelegate(projName, iosDevHost)
-    log "AppDelegate.m was updated"
-    
     updateIosRCTWebSocketExecutor(iosDevHost)
-    log "RCTWebSocketExecutor.m was updated"
+    log "AppDelegate.m and RCTWebSocketExecutor.m were updated"
 
     updateFigwheelUrls(devEnvRoot, androidDevHost, iosDevHost)
     log 'Dev server host for iOS: ' + iosDevHost
