@@ -71,6 +71,18 @@ interfaceConf   =
     shims:     ["cljsjs.react", "cljsjs.react.dom"]
     sampleCommandNs: '(in-ns \'$PROJECT_NAME_HYPHENATED$.state)'
     sampleCommand: '(swap! app-state assoc :app/msg "Hello Native World!")'
+  'rum':
+    cljsDir: "cljs-rum"
+    sources:
+      ios: ["core.cljs"]
+      android: ["core.cljs"]
+      common:  []
+      other:   [["sablono_compiler.clj","sablono/compiler.clj"],["support.cljs","re_natal/support.cljs"]]
+    deps:      ['[rum "0.8.3" :exclusions [cljsjs/react cljsjs/react-dom sablono]]'
+      '[natal-shell "0.1.6"]']
+    shims:     ["cljsjs.react", "cljsjs.react.dom", "sablono.core"]
+    sampleCommandNs: '(in-ns \'$PROJECT_NAME_HYPHENATED$.ios.core)'
+    sampleCommand: '(swap! app-state assoc :greeting "Hello Clojure in iOS and Android with Rum!")'
 interfaceNames   = Object.keys interfaceConf
 defaultInterface = 'reagent'
 defaultEnvRoots  =
