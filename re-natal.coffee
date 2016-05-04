@@ -29,7 +29,7 @@ devHostRx       = /\$DEV_HOST\$/g
 ipAddressRx     = /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/i
 figwheelUrlRx   = /ws:\/\/[0-9a-zA-Z\.]*:/g
 serverRx        = /http:\/\/[^:]+/g
-rnVersion       = '0.24.1'
+rnVersion       = '0.25.0'
 rnPackagerPort  = 8081
 process.title   = 're-natal'
 interfaceConf   =
@@ -475,7 +475,7 @@ updateFigwheelUrls = (devEnvRoot, androidHost, iosHost) ->
 updateIosAppDelegate = (projName, iosHost) ->
   appDelegatePath = "ios/#{projName}/AppDelegate.m"
   edit appDelegatePath, [[serverRx, "http://#{iosHost}"]]
-  
+
 updateIosRCTWebSocketExecutor = (iosHost) ->
   RCTWebSocketExecutorPath = "node_modules/react-native/Libraries/WebSocket/RCTWebSocketExecutor.m"
   edit RCTWebSocketExecutorPath, [[serverRx, "http://#{iosHost}"]]
