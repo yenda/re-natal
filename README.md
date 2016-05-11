@@ -370,7 +370,7 @@ $ cd ../already-existing
 and run the re-natal command line like so
 
 ```
-node ../re-natal/index.js
+$ node ../re-natal/index.js
 
   Usage: re-natal [options] [command]
 
