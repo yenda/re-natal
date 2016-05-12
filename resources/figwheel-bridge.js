@@ -13,7 +13,8 @@ var config = {
     serverPort: 8081
 };
 
-var React = require('react-native');
+var React = require('react');
+var ReactNative = require('react-native');
 var WebSocket = require('WebSocket');
 var self;
 var scriptQueue = [];
@@ -42,9 +43,9 @@ var figwheelApp = function (platform, devHost) {
             if (!this.state.loaded) {
                 var plainStyle = {flex: 1, alignItems: 'center', justifyContent: 'center'};
                 return (
-                    <React.View style={plainStyle}>
-                        <React.Text>Waiting for Figwheel to load files.</React.Text>
-                    </React.View>
+                    <ReactNative.View style={plainStyle}>
+                        <ReactNative.Text>Waiting for Figwheel to load files.</ReactNative.Text>
+                    </ReactNative.View>
                 );
             }
             return this.state.root;
@@ -214,7 +215,7 @@ function loadApp(platform, devHost, onLoadCb) {
 }
 
 function startApp(appName, platform, devHost) {
-    React.AppRegistry.registerComponent(
+    ReactNative.AppRegistry.registerComponent(
         appName, () => figwheelApp(platform, devHost));
 }
 
