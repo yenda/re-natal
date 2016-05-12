@@ -216,14 +216,19 @@ scanImageDir = (dir) ->
   fnames = fs.readdirSync(dir)
     .map (fname) -> "#{dir}/#{fname}"
     .filter (path) -> fs.statSync(path).isFile()
+    .filter (path) -> removeExcludeFiles(path)
     .map (path) -> path.replace /@2x|@3x/i, ''
     .filter (v, idx, slf) -> slf.indexOf(v) == idx
 
   dirs = fs.readdirSync(dir)
     .map (fname) -> "#{dir}/#{fname}"
     .filter (path) -> fs.statSync(path).isDirectory()
-
   fnames.concat scanImages(dirs)
+
+removeExcludeFiles = (file) ->
+    excludedFileNames = [".DS_Store"]
+    res = excludedFileNames.map (ex) -> (file.indexOf ex) == -1
+    true in res
 
 scanImages = (dirs) ->
   imgs = []

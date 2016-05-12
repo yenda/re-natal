@@ -349,3 +349,49 @@ tools.
     - [Java 8](http://www.oracle.com/technetwork/java/javase/downloads/index.html)
 - [Xcode](https://developer.apple.com/xcode) (+ Command Line Tools) `>=6.3` (optional for Android)
     - [OS X](http://www.apple.com/osx) `>=10.10`
+
+
+## Local Development
+
+If you would like to run any of this on your local environment first clone the code to an appropriate place on your machine and install dependencies
+
+```
+$ git clone https://github.com/drapanjanas/re-natal.git
+$ cd re-natal
+$ npm install
+```
+
+To test any changes made to re-natal, cd to an already existing project or a brand new dummy project:
+
+```
+$ cd ../already-existing
+```
+
+and run the re-natal command line like so
+
+```
+$ node ../re-natal/index.js
+
+  Usage: re-natal [options] [command]
+
+
+  Commands:
+
+    init [options] <name>      create a new ClojureScript React Native project
+    upgrade                    upgrades project files to current installed version of re-natal (the upgrade of re-natal itself is done via npm)
+    xcode                      open Xcode project
+    deps                       install all dependencies for the project
+    use-figwheel               generate index.ios.js and index.android.js for development with figwheel
+    use-android-device <type>  sets up the host for android device type: 'real' - localhost, 'avd' - 10.0.2.2, 'genymotion' - 10.0.3.2
+    use-ios-device <type>      sets up the host for ios device type: 'simulator' - localhost, 'device' - auto detect IP on eth0, IP
+    use-component <name>       configures a custom component to work with figwheel. name is the value you pass to (js/require) function.
+    enable-source-maps         patches RN packager to server *.map files from filesystem, so that chrome can download them.
+    copy-figwheel-bridge       copy figwheel-bridge.js into project
+
+  Options:
+
+    -h, --help     output usage information
+    -V, --version  output the version number
+```
+
+You can then run any of the commands manually.
