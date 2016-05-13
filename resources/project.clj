@@ -33,10 +33,14 @@
                                                              :compiler     {:output-to     "index.ios.js"
                                                                             :main          "env.ios.main"
                                                                             :output-dir    "target/ios"
+                                                                            :static-fns    true
+                                                                            :optimize-constants true
                                                                             :optimizations :simple}}
                                                    :android {:source-paths ["src" "env/prod"]
                                                              :compiler     {:output-to     "index.android.js"
                                                                             :main          "env.android.main"
                                                                             :output-dir    "target/android"
+                                                                            :static-fns    true
+                                                                            :optimize-constants true
                                                                             :optimizations :simple}}}}
                               }})
