@@ -1,14 +1,24 @@
 (ns $PROJECT_NAME_HYPHENATED$.$PLATFORM$.core
-  (:require-macros [natal-shell.components :refer [view text image touchable-highlight]]
-                   [natal-shell.alert :refer [alert]]
-                   [rum.core :refer [defc]])
+  (:require-macros [rum.core :refer [defc]])
   (:require [re-natal.support :as support]
             [rum.core :as rum]))
 
-(set! js/window.React (js/require "react-native"))
+(set! js/window.React (js/require "react"))
+(def ReactNative (js/require "react-native"))
 
-(def app-registry (.-AppRegistry js/React))
+(defn create-element [rn-comp opts & children]
+      (apply js/React.createElement rn-comp (clj->js opts) children))
+
+(def app-registry (.-AppRegistry ReactNative))
+(def view (partial create-element (.-View ReactNative)))
+(def text (partial create-element (.-Text ReactNative)))
+(def image (partial create-element (.-Image ReactNative)))
+(def touchable-highlight (partial create-element (.-TouchableHighlight ReactNative)))
+
 (def logo-img (js/require "./images/cljs.png"))
+
+(defn alert [title]
+      (.alert (.-Alert ReactNative) title))
 
 (defonce app-state (atom {:greeting "Hello Clojure in iOS and Android!"}))
 

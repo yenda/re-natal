@@ -66,8 +66,7 @@ interfaceConf   =
       android: ["core.cljs"]
       common:  ["state.cljs"]
       other:   [["support.cljs","re_natal/support.cljs"]]
-    deps:      ['[org.omcljs/om "1.0.0-alpha28" :exclusions [cljsjs/react cljsjs/react-dom]]'
-                '[natal-shell "0.1.6"]']
+    deps:      ['[org.omcljs/om "1.0.0-alpha28" :exclusions [cljsjs/react cljsjs/react-dom]]']
     shims:     ["cljsjs.react", "cljsjs.react.dom"]
     sampleCommandNs: '(in-ns \'$PROJECT_NAME_HYPHENATED$.state)'
     sampleCommand: '(swap! app-state assoc :app/msg "Hello Native World!")'
@@ -78,8 +77,7 @@ interfaceConf   =
       android: ["core.cljs"]
       common:  []
       other:   [["sablono_compiler.clj","sablono/compiler.clj"],["support.cljs","re_natal/support.cljs"]]
-    deps:      ['[rum "0.8.3" :exclusions [cljsjs/react cljsjs/react-dom sablono]]'
-      '[natal-shell "0.1.6"]']
+    deps:      ['[rum "0.8.3" :exclusions [cljsjs/react cljsjs/react-dom sablono]]']
     shims:     ["cljsjs.react", "cljsjs.react.dom", "sablono.core"]
     sampleCommandNs: '(in-ns \'$PROJECT_NAME_HYPHENATED$.ios.core)'
     sampleCommand: '(swap! app-state assoc :greeting "Hello Clojure in iOS and Android with Rum!")'
