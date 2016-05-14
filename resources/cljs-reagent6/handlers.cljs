@@ -11,11 +11,13 @@
 (defn check-and-throw
   "throw an exception if db doesn't match the schema."
   [a-schema db]
-    (if-let [problems (s/check a-schema db)]
+    (when-let [problems (s/check a-schema db)]
       (throw (js/Error. (str "schema check failed: " problems)))))
 
 (def validate-schema-mw
-  (after (partial check-and-throw schema)))
+  (if goog.DEBUG
+    (after (partial check-and-throw schema))
+    []))
 
 ;; -- Handlers --------------------------------------------------------------
 
