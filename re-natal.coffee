@@ -613,7 +613,7 @@ cli.command 'use-android-device <type>'
     configureDevHostForAndroidDevice type
 
 cli.command 'use-ios-device <type>'
-  .description 'sets up the host for ios device type: \'simulator\' - localhost, \'device\' - auto detect IP on eth0, IP'
+  .description 'sets up the host for ios device type: \'simulator\' - localhost, \'real\' - auto detect IP on eth0, IP'
   .action (type) ->
     configureDevHostForIosDevice type
 
