@@ -82,7 +82,7 @@ interfaceConf   =
     sampleCommandNs: '(in-ns \'$PROJECT_NAME_HYPHENATED$.ios.core)'
     sampleCommand: '(swap! app-state assoc :greeting "Hello Clojure in iOS and Android with Rum!")'
 interfaceNames   = Object.keys interfaceConf
-defaultInterface = 'reagent'
+defaultInterface = 'reagent6'
 defaultEnvRoots  =
   dev: 'env/dev'
   prod: 'env/prod'
