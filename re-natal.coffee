@@ -29,7 +29,7 @@ devHostRx       = /\$DEV_HOST\$/g
 ipAddressRx     = /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/i
 figwheelUrlRx   = /ws:\/\/[0-9a-zA-Z\.]*:/g
 serverRx        = /http:\/\/[^:]+/g
-rnVersion       = '0.25.1'
+rnVersion       = '0.26.0'
 rnPackagerPort  = 8081
 process.title   = 're-natal'
 interfaceConf   =
@@ -53,7 +53,7 @@ interfaceConf   =
       android: ["core.cljs"]
       common:  ["handlers.cljs", "subs.cljs", "db.cljs"]
       other:   [["reagent_dom.cljs","reagent/dom.cljs"], ["reagent_dom_server.cljs","reagent/dom/server.cljs"]]
-    deps:      ['[reagent "0.6.0-alpha" :exclusions [cljsjs/react cljsjs/react-dom cljsjs/react-dom-server]]'
+    deps:      ['[reagent "0.6.0-alpha2" :exclusions [cljsjs/react cljsjs/react-dom cljsjs/react-dom-server]]'
       '[re-frame "0.7.0"]'
       '[prismatic/schema "1.0.4"]']
     shims:     ["cljsjs.react", "cljsjs.react.dom", "cljsjs.react.dom.server"]
@@ -66,7 +66,7 @@ interfaceConf   =
       android: ["core.cljs"]
       common:  ["state.cljs"]
       other:   [["support.cljs","re_natal/support.cljs"]]
-    deps:      ['[org.omcljs/om "1.0.0-alpha28" :exclusions [cljsjs/react cljsjs/react-dom]]']
+    deps:      ['[org.omcljs/om "1.0.0-alpha35" :exclusions [cljsjs/react cljsjs/react-dom]]']
     shims:     ["cljsjs.react", "cljsjs.react.dom"]
     sampleCommandNs: '(in-ns \'$PROJECT_NAME_HYPHENATED$.state)'
     sampleCommand: '(swap! app-state assoc :app/msg "Hello Native World!")'
