@@ -107,6 +107,8 @@ NOTE: you might need to restart react native packager and reload your app in sim
 If all went well you should see REPL prompt and changes in source files
 should be hot-loaded by Figwheel.
 
+To disable Figwheel run `lein prod-build`
+
 #### Using external React Native Components
 
 Lets say you have installed an external library from npm like this:
