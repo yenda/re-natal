@@ -558,6 +558,7 @@ doUpgrade = (config) ->
 
   copyFigwheelBridge(projNameUs)
   log 'upgraded figwheel-bridge.js'
+  log('To upgrade React Native version please follow the official guide in https://facebook.github.io/react-native/docs/upgrading.html', 'yellow')
 
 useComponent = (name) ->
   log "Component '#{name}' is now configured for figwheel, please re-run 'use-figwheel' command to take effect"
