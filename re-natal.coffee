@@ -28,8 +28,9 @@ platformRx      = /\$PLATFORM\$/g
 devHostRx       = /\$DEV_HOST\$/g
 ipAddressRx     = /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/i
 figwheelUrlRx   = /ws:\/\/[0-9a-zA-Z\.]*:/g
-serverRx        = /http:\/\/[^:]+/g
-rnVersion       = '0.27.2'
+appDelegateRx   = /http:\/\/[^:]+/g
+debugHostRx     = /host\s+=\s+@".*";/g
+rnVersion       = '0.29.2'
 rnPackagerPort  = 8081
 process.title   = 're-natal'
 interfaceConf   =
@@ -53,7 +54,7 @@ interfaceConf   =
       android: ["core.cljs"]
       common:  ["handlers.cljs", "subs.cljs", "db.cljs"]
       other:   [["reagent_dom.cljs","reagent/dom.cljs"], ["reagent_dom_server.cljs","reagent/dom/server.cljs"]]
-    deps:      ['[reagent "0.6.0-alpha2" :exclusions [cljsjs/react cljsjs/react-dom cljsjs/react-dom-server]]'
+    deps:      ['[reagent "0.6.0-rc" :exclusions [cljsjs/react cljsjs/react-dom cljsjs/react-dom-server]]'
       '[re-frame "0.7.0"]'
       '[prismatic/schema "1.0.4"]']
     shims:     ["cljsjs.react", "cljsjs.react.dom", "cljsjs.react.dom.server"]
@@ -475,13 +476,14 @@ updateFigwheelUrls = (devEnvRoot, androidHost, iosHost) ->
   mainIosDevPath = "#{devEnvRoot}/env/ios/main.cljs"
   edit mainIosDevPath, [[figwheelUrlRx, "ws://#{iosHost}:"]]
 
+# Current RN version (0.29.2) has no host in AppDelegate.m maybe docs are outdated?
 updateIosAppDelegate = (projName, iosHost) ->
   appDelegatePath = "ios/#{projName}/AppDelegate.m"
-  edit appDelegatePath, [[serverRx, "http://#{iosHost}"]]
+  edit appDelegatePath, [[appDelegateRx, "http://#{iosHost}"]]
 
 updateIosRCTWebSocketExecutor = (iosHost) ->
   RCTWebSocketExecutorPath = "node_modules/react-native/Libraries/WebSocket/RCTWebSocketExecutor.m"
-  edit RCTWebSocketExecutorPath, [[serverRx, "http://#{iosHost}"]]
+  edit RCTWebSocketExecutorPath, [[debugHostRx, "host = @\"#{iosHost}\";"]]
 
 generateDevScripts = () ->
   try
@@ -508,9 +510,9 @@ generateDevScripts = () ->
     fs.writeFileSync 'index.android.js', "#{moduleMap}require('figwheel-bridge').withModules(modules).start('#{projName}','android','#{androidDevHost}');"
     log 'index.android.js was regenerated'
 
-    updateIosAppDelegate(projName, iosDevHost)
+    #updateIosAppDelegate(projName, iosDevHost)
     updateIosRCTWebSocketExecutor(iosDevHost)
-    log "AppDelegate.m and RCTWebSocketExecutor.m were updated"
+    log "Host in RCTWebSocketExecutor.m was updated"
 
     updateFigwheelUrls(devEnvRoot, androidDevHost, iosDevHost)
     log 'Dev server host for iOS: ' + iosDevHost
