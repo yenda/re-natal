@@ -169,23 +169,18 @@ function compileWarningsToYellowBox() {
     var isBuffering = false;
     var compileExceptionBuffer = "";
     window.console.log = function (msg) {
+        log.apply(window.console, arguments);
         if (compileExceptionRx.test(msg)) { // enter buffering mode to get all the messages for exception
-            log.apply(window.console, arguments);
             isBuffering = true;
             compileExceptionBuffer = msg + "\n";
         } else if (errorInFileRx.test(msg) && isBuffering) { // exit buffering mode and log buffered messages to YellowBox
-            log.apply(window.console, arguments);
             isBuffering = false;
             console.warn(compileExceptionBuffer + msg);
             compileExceptionBuffer = "";
         } else if (isBuffering) { //log messages buffering mode
-            log.apply(window.console, arguments);
             compileExceptionBuffer += msg + "\n";
         } else if (compileWarningRx.test(msg)) {
-            log.apply(window.console, arguments);
             console.warn(msg);
-        } else {
-            log.apply(window.console, arguments);
         }
     };
 }
