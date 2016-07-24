@@ -1,8 +1,10 @@
 (ns $PROJECT_NAME_HYPHENATED$.db
-  (:require [schema.core :as s :include-macros true]))
+  (:require [cljs.spec :as s]))
 
-;; schema of app-db
-(def schema {:greeting s/Str})
+;; spec of app-db
+(s/def ::greeting string?)
+(s/def ::app-db
+  (s/keys :req-un [::greeting]))
 
 ;; initial state of app-db
 (def app-db {:greeting "Hello Clojure in iOS and Android!"})
