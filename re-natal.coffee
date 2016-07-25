@@ -42,8 +42,7 @@ interfaceConf   =
       common:  ["handlers.cljs", "subs.cljs", "db.cljs"]
       other:   []
     deps:      ['[reagent "0.5.1" :exclusions [cljsjs/react]]'
-                '[re-frame "0.6.0"]'
-                '[prismatic/schema "1.0.4"]']
+                '[re-frame "0.6.0"]']
     shims:     ["cljsjs.react"]
     sampleCommandNs: '(in-ns \'$PROJECT_NAME_HYPHENATED$.ios.core)'
     sampleCommand: '(dispatch [:set-greeting "Hello Native World!"])'
@@ -55,8 +54,7 @@ interfaceConf   =
       common:  ["handlers.cljs", "subs.cljs", "db.cljs"]
       other:   [["reagent_dom.cljs","reagent/dom.cljs"], ["reagent_dom_server.cljs","reagent/dom/server.cljs"]]
     deps:      ['[reagent "0.6.0-rc" :exclusions [cljsjs/react cljsjs/react-dom cljsjs/react-dom-server]]'
-      '[re-frame "0.7.0"]'
-      '[prismatic/schema "1.0.4"]']
+      '[re-frame "0.7.0"]']
     shims:     ["cljsjs.react", "cljsjs.react.dom", "cljsjs.react.dom.server"]
     sampleCommandNs: '(in-ns \'$PROJECT_NAME_HYPHENATED$.ios.core)'
     sampleCommand: '(dispatch [:set-greeting "Hello Native World!"])'
