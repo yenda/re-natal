@@ -1,9 +1,7 @@
 (ns $PROJECT_NAME_HYPHENATED$.subs
-  (:require-macros [reagent.ratom :refer [reaction]])
-  (:require [re-frame.core :refer [register-sub]]))
+  (:require [re-frame.core :refer [reg-sub]]))
 
-(register-sub
+(reg-sub
   :get-greeting
   (fn [db _]
-    (reaction
-      (get @db :greeting))))
+    (:greeting db)))

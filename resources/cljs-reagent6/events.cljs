@@ -1,6 +1,6 @@
-(ns $PROJECT_NAME_HYPHENATED$.handlers
+(ns $PROJECT_NAME_HYPHENATED$.events
   (:require
-    [re-frame.core :refer [register-handler after]]
+    [re-frame.core :refer [reg-event after]]
     [cljs.spec :as s]
     [$PROJECT_NAME_HYPHENATED$.db :as db :refer [app-db]]))
 
@@ -22,13 +22,13 @@
 
 ;; -- Handlers --------------------------------------------------------------
 
-(register-handler
+(reg-event
   :initialize-db
   validate-spec-mw
   (fn [_ _]
     app-db))
 
-(register-handler
+(reg-event
   :set-greeting
   validate-spec-mw
   (fn [db [_ value]]

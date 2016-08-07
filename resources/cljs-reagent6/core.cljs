@@ -1,7 +1,7 @@
 (ns $PROJECT_NAME_HYPHENATED$.$PLATFORM$.core
   (:require [reagent.core :as r :refer [atom]]
             [re-frame.core :refer [subscribe dispatch dispatch-sync]]
-            [$PROJECT_NAME_HYPHENATED$.handlers]
+            [$PROJECT_NAME_HYPHENATED$.events]
             [$PROJECT_NAME_HYPHENATED$.subs]))
 
 (def ReactNative (js/require "react-native"))
