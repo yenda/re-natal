@@ -1,5 +1,5 @@
 (ns $PROJECT_NAME_HYPHENATED$.db
-  (:require [cljs.spec :as s]))
+  (:require [clojure.spec :as s]))
 
 ;; spec of app-db
 (s/def ::greeting string?)
