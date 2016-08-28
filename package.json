@@ -11,7 +11,7 @@
     "commander": "^2.8.1",
     "fs-extra": "^0.26.5",
     "semver": "^5.0.1",
-    "check-dependencies":"^0.11.0"
+    "check-dependencies":"^1.0.1"
   },
   "engines": {
     "node": ">=4.0.0"

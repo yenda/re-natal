@@ -1,6 +1,6 @@
 (ns $PROJECT_NAME_HYPHENATED$.events
   (:require
-    [re-frame.core :refer [reg-event after]]
+    [re-frame.core :refer [reg-event-db after]]
     [clojure.spec :as s]
     [$PROJECT_NAME_HYPHENATED$.db :as db :refer [app-db]]))
 
@@ -22,13 +22,13 @@
 
 ;; -- Handlers --------------------------------------------------------------
 
-(reg-event
+(reg-event-db
   :initialize-db
   validate-spec-mw
   (fn [_ _]
     app-db))
 
-(reg-event
+(reg-event-db
   :set-greeting
   validate-spec-mw
   (fn [db [_ value]]
