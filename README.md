@@ -69,7 +69,7 @@ $ re-natal init FutureApp -i [om-next | reagent6 | rum]
 If your app's name is more than a single word, be sure to type it in CamelCase.
 A corresponding hyphenated Clojure namespace will be created.
 
-If all goes well you should see printed out basic instructions how to run in iOS simulator.
+The init process will take a few minutes — coffee break! If all goes well you should see printed out basic instructions how to run in iOS simulator.
 
 ```
 $ cd future-app
