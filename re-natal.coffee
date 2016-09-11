@@ -243,6 +243,7 @@ configureDevHostForAndroidDevice = (deviceType) ->
     config = readConfig()
     config.androidHost = devHost
     writeConfig(config)
+    log "Please run: re-natal use-figwheel to take effect."
   catch {message}
     logErr message
 
@@ -267,6 +268,7 @@ configureDevHostForIosDevice = (deviceType) ->
     config = readConfig()
     config.iosHost = devHost
     writeConfig(config)
+    log "Please run: re-natal use-figwheel to take effect."
   catch {message}
     logErr message
 
@@ -360,7 +362,7 @@ init = (interfaceName, projName) ->
 
   try
     log "Creating #{projName}", 'bgMagenta'
-    log ''
+    log '\u2615  It\'s coffee time! Downloading deps might take a while...', 'yellow'
 
     if fs.existsSync projNameHyph
       throw new Error "Directory #{projNameHyph} already exists"
@@ -385,7 +387,7 @@ init = (interfaceName, projName) ->
 
     fs.copySync("#{resources}/images", "./images")
 
-    log 'Creating React Native skeleton. Relax, this takes a while...'
+    log 'Creating React Native skeleton.'
 
     fs.writeFileSync 'package.json', JSON.stringify
       name:    projName
