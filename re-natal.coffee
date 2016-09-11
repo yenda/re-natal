@@ -362,7 +362,7 @@ init = (interfaceName, projName) ->
 
   try
     log "Creating #{projName}", 'bgMagenta'
-    log '\u2615  It\'s coffee time! Downloading deps might take a while...', 'yellow'
+    log '\u2615  Grab a coffee! Downloading deps might take a while...', 'yellow'
 
     if fs.existsSync projNameHyph
       throw new Error "Directory #{projNameHyph} already exists"
@@ -419,14 +419,14 @@ init = (interfaceName, projName) ->
     log 'To get started with your new app, first cd into its directory:', 'yellow'
     log "cd #{projNameHyph}", 'inverse'
     log ''
-    log 'Run IOS app:' , 'yellow'
+    log 'Run iOS app:' , 'yellow'
     log 'react-native run-ios > /dev/null', 'inverse'
     log ''
     log 'To use figwheel type:' , 'yellow'
     log 're-natal use-figwheel', 'inverse'
     log 'lein figwheel ios', 'inverse'
     log ''
-    log 'Reload the app in simulator'
+    log 'Reload the app in simulator (\u2318 + R)'
     log ''
     log 'At the REPL prompt type this:', 'yellow'
     log interfaceConf[interfaceName].sampleCommandNs.replace(projNameHyphRx, projNameHyph), 'inverse'
