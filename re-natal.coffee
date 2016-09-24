@@ -233,13 +233,18 @@ scanImages = (dirs) ->
     imgs = imgs.concat(scanImageDir(dir));
   imgs
 
+resolveAndroidDevHost = (deviceType) ->
+  allowedTypes = {'real': 'localhost', 'avd': '10.0.2.2', 'genymotion': '10.0.3.2'}
+  devHost = allowedTypes[deviceType]
+  if (devHost?)
+    log "Using '#{devHost}' for device type #{deviceType}"
+    devHost
+  else
+    deviceTypeIsIpAddress(deviceType, Object.keys(allowedTypes))
+
 configureDevHostForAndroidDevice = (deviceType) ->
   try
-    allowedTypes = {'real': 'localhost', 'avd': '10.0.2.2', 'genymotion': '10.0.3.2'}
-    devHost = allowedTypes[deviceType]
-    if (! devHost?)
-      throw new Error "Unknown android device type #{deviceType}, known types are #{Object.keys(allowedTypes)}"
-    log "Using host '#{devHost}' for android device type '#{deviceType}'"
+    devHost = resolveAndroidDevHost(deviceType)
     config = readConfig()
     config.androidHost = devHost
     writeConfig(config)
@@ -255,12 +260,8 @@ resolveIosDevHost = (deviceType) ->
     en0Ip = exec('ipconfig getifaddr en0', true).toString().trim()
     log "Using IP of interface en0:'#{en0Ip}' for real iOS device"
     en0Ip
-  else if deviceType.match(ipAddressRx)
-    log "Using development host IP: '#{deviceType}'"
-    deviceType
   else
-    log("Value '#{deviceType}' is not a valid IP address, still configured it as development host for iOS", 'yellow')
-    deviceType
+    deviceTypeIsIpAddress(deviceType, ['simulator', 'real'])
 
 configureDevHostForIosDevice = (deviceType) ->
   try
@@ -271,6 +272,14 @@ configureDevHostForIosDevice = (deviceType) ->
     log "Please run: re-natal use-figwheel to take effect."
   catch {message}
     logErr message
+
+deviceTypeIsIpAddress = (deviceType, allowedTypes) ->
+  if deviceType.match(ipAddressRx)
+    log "Using development host IP: '#{deviceType}'"
+    deviceType
+  else
+    log("Value '#{deviceType}' is not a valid IP address, still configured it as development host. Did you mean one of: [#{allowedTypes}] ?", 'yellow')
+    deviceType
 
 copyDevEnvironmentFiles = (interfaceName, projNameHyph, projName, devEnvRoot, devHost) ->
   fs.mkdirpSync "#{devEnvRoot}/env/ios"
@@ -611,7 +620,7 @@ cli.command 'use-figwheel'
     generateDevScripts()
 
 cli.command 'use-android-device <type>'
-  .description 'sets up the host for android device type: \'real\' - localhost, \'avd\' - 10.0.2.2, \'genymotion\' - 10.0.3.2'
+  .description 'sets up the host for android device type: \'real\' - localhost, \'avd\' - 10.0.2.2, \'genymotion\' - 10.0.3.2, IP'
   .action (type) ->
     configureDevHostForAndroidDevice type
 
