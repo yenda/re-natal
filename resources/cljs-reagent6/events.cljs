@@ -1,12 +1,12 @@
 (ns $PROJECT_NAME_HYPHENATED$.events
   (:require
-    [re-frame.core :refer [reg-event-db after]]
-    [clojure.spec :as s]
-    [$PROJECT_NAME_HYPHENATED$.db :as db :refer [app-db]]))
+   [re-frame.core :refer [reg-event-db ->interceptor]]
+   [clojure.spec :as s]
+   [$PROJECT_NAME_HYPHENATED$.db :as db :refer [app-db]]))
 
-;; -- Middleware ------------------------------------------------------------
+;; -- Interceptors ------------------------------------------------------------
 ;;
-;; See https://github.com/Day8/re-frame/wiki/Using-Handler-Middleware
+;; See https://github.com/Day8/re-frame/blob/master/docs/Interceptors.md
 ;;
 (defn check-and-throw
   "Throw an exception if db doesn't have a valid spec."
@@ -15,21 +15,24 @@
     (let [explain-data (s/explain-data spec db)]
       (throw (ex-info (str "Spec check failed: " explain-data) explain-data)))))
 
-(def validate-spec-mw
-  (if goog.DEBUG
-    (after (partial check-and-throw ::db/app-db))
-    []))
+(def validate-spec
+  (->interceptor
+   :id :validate-spec
+   :after (fn [context]
+            (if goog.DEBUG
+              (check-and-throw ::db/app-db (get-in context [:effects :db])))
+            context)))
 
 ;; -- Handlers --------------------------------------------------------------
 
 (reg-event-db
-  :initialize-db
-  validate-spec-mw
-  (fn [_ _]
-    app-db))
+ :initialize-db
+ validate-spec
+ (fn [_ _]
+   app-db))
 
 (reg-event-db
-  :set-greeting
-  validate-spec-mw
-  (fn [db [_ value]]
-    (assoc db :greeting value)))
+ :set-greeting
+ validate-spec
+ (fn [db [_ value]]
+   (assoc db :greeting value)))
