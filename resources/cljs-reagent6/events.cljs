@@ -1,6 +1,6 @@
 (ns $PROJECT_NAME_HYPHENATED$.events
   (:require
-   [re-frame.core :refer [reg-event-db ->interceptor]]
+   [re-frame.core :refer [reg-event-db after]]
    [clojure.spec :as s]
    [$PROJECT_NAME_HYPHENATED$.db :as db :refer [app-db]]))
 
@@ -16,12 +16,9 @@
       (throw (ex-info (str "Spec check failed: " explain-data) explain-data)))))
 
 (def validate-spec
-  (->interceptor
-   :id :validate-spec
-   :after (fn [context]
-            (if goog.DEBUG
-              (check-and-throw ::db/app-db (get-in context [:effects :db])))
-            context)))
+  (if goog.DEBUG
+    (after (partial check-and-throw ::db/app-db))
+    []))
 
 ;; -- Handlers --------------------------------------------------------------
 
