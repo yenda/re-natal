@@ -16,33 +16,36 @@
             :profiles {:dev {:dependencies [[figwheel-sidecar "0.5.0-6"]
                                             [com.cemerick/piggieback "0.2.1"]]
                              :source-paths ["src" "env/dev"]
-                             :cljsbuild    {:builds {:ios     {:source-paths ["src" "env/dev"]
-                                                               :figwheel     true
-                                                               :compiler     {:output-to     "target/ios/not-used.js"
-                                                                              :main          "env.ios.main"
-                                                                              :output-dir    "target/ios"
-                                                                              :optimizations :none}}
-                                                     :android {:source-paths ["src" "env/dev"]
-                                                               :figwheel     true
-                                                               :compiler     {:output-to     "target/android/not-used.js"
-                                                                              :main          "env.android.main"
-                                                                              :output-dir    "target/android"
-                                                                              :optimizations :none}}}}
+                             :cljsbuild    {:builds [{:id :ios
+                                                      :source-paths ["src" "env/dev"]
+                                                      :figwheel     true
+                                                      :compiler     {:output-to     "target/ios/not-used.js"
+                                                                     :main          "env.ios.main"
+                                                                     :output-dir    "target/ios"
+                                                                     :optimizations :none}}
+                                                     {:id :android
+                                                      :source-paths ["src" "env/dev"]
+                                                      :figwheel     true
+                                                      :compiler     {:output-to     "target/android/not-used.js"
+                                                                     :main          "env.android.main"
+                                                                     :output-dir    "target/android"
+                                                                     :optimizations :none}}]}
                              :repl-options {:nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}}
-                       :prod {:cljsbuild {:builds {:ios     {:source-paths ["src" "env/prod"]
-                                                             :compiler     {:output-to     "index.ios.js"
-                                                                            :main          "env.ios.main"
-                                                                            :output-dir    "target/ios"
-                                                                            :static-fns    true
-                                                                            :optimize-constants true
-                                                                            :optimizations :simple
-                                                                            :closure-defines {"goog.DEBUG" false}}}
-                                                   :android {:source-paths ["src" "env/prod"]
-                                                             :compiler     {:output-to     "index.android.js"
-                                                                            :main          "env.android.main"
-                                                                            :output-dir    "target/android"
-                                                                            :static-fns    true
-                                                                            :optimize-constants true
-                                                                            :optimizations :simple
-                                                                            :closure-defines {"goog.DEBUG" false}}}}}
-                              }})
+                       :prod {:cljsbuild {:builds [{:id :ios
+                                                    :source-paths ["src" "env/prod"]
+                                                    :compiler     {:output-to     "index.ios.js"
+                                                                   :main          "env.ios.main"
+                                                                   :output-dir    "target/ios"
+                                                                   :static-fns    true
+                                                                   :optimize-constants true
+                                                                   :optimizations :simple
+                                                                   :closure-defines {"goog.DEBUG" false}}}
+                                                   {:id :android
+                                                    :source-paths ["src" "env/prod"]
+                                                    :compiler     {:output-to     "index.android.js"
+                                                                   :main          "env.android.main"
+                                                                   :output-dir    "target/android"
+                                                                   :static-fns    true
+                                                                   :optimize-constants true
+                                                                   :optimizations :simple
+                                                                   :closure-defines {"goog.DEBUG" false}}}]}}})
