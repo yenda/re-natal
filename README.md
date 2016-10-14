@@ -24,7 +24,7 @@ For more ClojureScript React Native resources visit [cljsrn.org](http://cljsrn.o
 Contributions are welcome.
 
 ## State
-- Uses React Native v0.34
+- Uses React Native v0.35
 - Same codebase for iOS and Android
 - Figwheel used for REPL and live coding.
   - Works in iOS (real device and simulator).
@@ -327,6 +327,7 @@ You can undo this any time by deleting `node_modules` and running `re-natal deps
 * [Re-Navigate](https://github.com/vikeri/re-navigate) example of using new Navigation component [NavigationExperimental](https://github.com/ericvicenti/navigation-rfc)
 * [Showcase of iOS navigation](https://github.com/seantempesta/om-next-react-native-router-flux) with react-native-router-flux and Om.Next
 * [Catlantis](https://github.com/madvas/catlantis) is a funny demo application about cats
+* [Lymchat](https://github.com/tiensonqin/lymchat) App to learn different cultures. Lym is available in [App Store](https://itunes.apple.com/us/app/lym/id1134985541?ls=1&mt=8).
 
 ## Tips
 - Having `rlwrap` installed is optional but highly recommended since it makes
