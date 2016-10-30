@@ -15,7 +15,7 @@ The support of Figwheel is based on brilliant solution developed by Will Decker 
 which works in both platforms.
 
 Re-Natal is a simple command-line utility that automates most of the process of
-setting up a React Native app running on ClojureScript with Reagent an re-frame.
+setting up a React Native app running on ClojureScript with Reagent and re-frame.
 
 Generated project works in iOS and Android devices.
 
