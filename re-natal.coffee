@@ -406,6 +406,8 @@ init = (interfaceName, projName) ->
         start: 'node_modules/react-native/packager/packager.sh --nonPersistent'
       dependencies:
         'react-native': rnVersion
+        # Fixes issue with packager 'TimeoutError: transforming ... took longer than 301 seconds.'
+        'babel-plugin-transform-es2015-block-scoping': '6.15.0'
     , null, 2
 
     exec 'npm i'
