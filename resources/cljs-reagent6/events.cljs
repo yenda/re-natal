@@ -10,10 +10,10 @@
 ;;
 (defn check-and-throw
   "Throw an exception if db doesn't have a valid spec."
-  [spec db [msg]]
+  [spec db [event]]
   (when-not (s/valid? spec db)
     (let [explain-data (s/explain-data spec db)]
-      (throw (ex-info (str "Spec check " msg " failed: " explain-data) explain-data)))))
+      (throw (ex-info (str "Spec check after " event " failed: " explain-data) explain-data)))))
 
 (def validate-spec
   (if goog.DEBUG
