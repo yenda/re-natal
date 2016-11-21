@@ -125,9 +125,13 @@ React Native packager statically scans for all calls to `require` function and p
 code to be available at runtime. But, dynamically loaded (by figwheel) code bypass this scan
 and therefore require of custom component fails.
 
-To overcome this execute command:
+To overcome this execute `use-component` command:
 ```
 $ re-natal use-component some-library/Component
+```
+or for platform-specific lib use optional platform parameter:
+```
+$ re-natal use-component some-library/ComponentIOS ios"
 ```
 Then, regenerate index.\*.js files:
 ```
