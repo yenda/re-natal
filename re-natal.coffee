@@ -85,6 +85,7 @@ defaultInterface = 'reagent6'
 defaultEnvRoots  =
   dev: 'env/dev'
   prod: 'env/prod'
+platforms = ['ios', 'android']
 
 log = (s, color = 'green') ->
   console.log chalk[color] s
@@ -338,7 +339,6 @@ copySrcFiles = (interfaceName, projName, projNameUs, projNameHyph) ->
     fs.copySync("#{resources}/#{cljsDir}/#{fileName}", path)
     edit path, [[projNameHyphRx, projNameHyph], [projNameRx, projName]]
 
-  platforms = ["ios", "android"]
   for platform in platforms
     fs.mkdirSync "src/#{projNameUs}/#{platform}"
     fileNames = interfaceConf[interfaceName].sources[platform]
@@ -496,6 +496,16 @@ updateIosRCTWebSocketExecutor = (iosHost) ->
   RCTWebSocketExecutorPath = "node_modules/react-native/Libraries/WebSocket/RCTWebSocketExecutor.m"
   edit RCTWebSocketExecutorPath, [[debugHostRx, "host = @\"#{iosHost}\";"]]
 
+platformModulesAndImages = (config, platform) ->
+  images = scanImages(config.imageDirs).map (fname) -> './' + fname;
+  modulesAndImages = config.modules.concat images;
+  if typeof config.modulesPlatform is 'undefined'
+    config.modulesPlatform = {};
+  if typeof config.modulesPlatform is 'undefined' or typeof config.modulesPlatform[platform] is 'undefined'
+    modulesAndImages
+  else
+    modulesAndImages.concat(config.modulesPlatform[platform])
+
 generateDevScripts = () ->
   try
     config = readConfig()
@@ -509,17 +519,14 @@ generateDevScripts = () ->
     log 'Cleaning...'
     exec 'lein clean'
 
-    images = scanImages(config.imageDirs).map (fname) -> './' + fname;
-    modulesAndImages = config.modules.concat images;
-    moduleMap = generateRequireModulesCode modulesAndImages
-
     androidDevHost = config.androidHost
     iosDevHost = config.iosHost
+    devHost =  {'android' : androidDevHost, 'ios' : iosDevHost}
 
-    fs.writeFileSync 'index.ios.js', "#{moduleMap}require('figwheel-bridge').withModules(modules).start('#{projName}','ios','#{iosDevHost}');"
-    log 'index.ios.js was regenerated'
-    fs.writeFileSync 'index.android.js', "#{moduleMap}require('figwheel-bridge').withModules(modules).start('#{projName}','android','#{androidDevHost}');"
-    log 'index.android.js was regenerated'
+    for platform in platforms
+      moduleMap = generateRequireModulesCode(platformModulesAndImages(config, platform))
+      fs.writeFileSync "index.#{platform}.js", "#{moduleMap}require('figwheel-bridge').withModules(modules).start('#{projName}','#{platform}','#{devHost[platform]}');"
+      log "index.#{platform}.js was regenerated"
 
     #updateIosAppDelegate(projName, iosDevHost)
     updateIosRCTWebSocketExecutor(iosDevHost)
@@ -573,11 +580,21 @@ doUpgrade = (config) ->
   log 'upgraded figwheel-bridge.js'
   log('To upgrade React Native version please follow the official guide in https://facebook.github.io/react-native/docs/upgrading.html', 'yellow')
 
-useComponent = (name) ->
-  log "Component '#{name}' is now configured for figwheel, please re-run 'use-figwheel' command to take effect"
+useComponent = (name, platform) ->
   try
     config = readConfig()
-    config.modules.push name
+    if typeof platform isnt 'string'
+      config.modules.push name
+      log "Component '#{name}' is now configured for figwheel, please re-run 'use-figwheel' command to take effect"
+    else if platforms.indexOf(platform) > -1
+      if typeof config.modulesPlatform is 'undefined'
+        config.modulesPlatform = {}
+      if typeof config.modulesPlatform[platform] is 'undefined'
+        config.modulesPlatform[platform] = []
+      config.modulesPlatform[platform].push name
+      log "Component '#{name}' (#{platform}-only) is now configured for figwheel, please re-run 'use-figwheel' command to take effect"
+    else
+      throw new Error("unsupported platform: #{platform}")
     writeConfig(config)
   catch {message}
     logErr message
@@ -631,10 +648,10 @@ cli.command 'use-ios-device <type>'
   .action (type) ->
     configureDevHostForIosDevice type
 
-cli.command 'use-component <name>'
+cli.command 'use-component <name> [<platform>]'
   .description 'configures a custom component to work with figwheel. name is the value you pass to (js/require) function.'
-  .action (name) ->
-    useComponent(name)
+  .action (name, platform) ->
+    useComponent(name, platform)
 
 cli.command 'enable-source-maps'
 .description 'patches RN packager to server *.map files from filesystem, so that chrome can download them.'
