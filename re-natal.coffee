@@ -216,6 +216,7 @@ scanImageDir = (dir) ->
     .filter (path) -> fs.statSync(path).isFile()
     .filter (path) -> removeExcludeFiles(path)
     .map (path) -> path.replace /@2x|@3x/i, ''
+    .map (path) -> path.replace new RegExp(".(android|ios)" + fpath.extname(path) + "$", "i"), fpath.extname(path)
     .filter (v, idx, slf) -> slf.indexOf(v) == idx
 
   dirs = fs.readdirSync(dir)
