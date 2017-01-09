@@ -334,6 +334,7 @@ You can undo this any time by deleting `node_modules` and running `re-natal deps
 * [Showcase of iOS navigation](https://github.com/seantempesta/om-next-react-native-router-flux) with react-native-router-flux and Om.Next
 * [Catlantis](https://github.com/madvas/catlantis) is a funny demo application about cats
 * [Lymchat](https://github.com/tiensonqin/lymchat) App to learn different cultures. Lym is available in [App Store](https://itunes.apple.com/us/app/lym/id1134985541?ls=1&mt=8).
+* [Status](https://status.im) ([Github](https://github.com/status-im/status-react/)): a web3 browser, messenger, and gateway to a decentralised world of Ethereum. re-natal + re-frame + cljs + golang
 
 ## Tips
 - Having `rlwrap` installed is optional but highly recommended since it makes
