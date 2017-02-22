@@ -1,50 +1,54 @@
 # Re-Natal
-### Bootstrap ClojureScript-based React Native apps with Reagent and re-frame
-Artur Girenko, MIT License
+### A utility for building ClojureScript-based React Native apps
+Artur Girenko
 [@drapanjanas](https://twitter.com/drapanjanas)
 
 ---
 
-This project is a fork of [dmotz/natal](https://github.com/dmotz/natal) by Dan Motzenbecker with
-the goal of generating skeleton of native app for iOS and Android based on
-[Reagent](https://github.com/reagent-project/reagent) + [re-frame](https://github.com/Day8/re-frame),
-[Om.Next](https://github.com/omcljs/om/wiki/Quick-Start-(om.next)) or
-[Rum](https://github.com/tonsky/rum).
-
-The support of Figwheel is based on brilliant solution developed by Will Decker [decker405/figwheel-react-native](https://github.com/decker405/figwheel-react-native)
-which works in both platforms.
-
 Re-Natal is a simple command-line utility that automates most of the process of
-setting up a React Native app running on ClojureScript with Reagent and re-frame.
+setting up a React Native app running on ClojureScript with [Reagent] + [re-frame](https://github.com/Day8/re-frame), [Om.Next] or [Rum].
 
-Generated project works in iOS and Android devices.
+This project is a fork of [dmotz/natal](https://github.com/dmotz/natal) by Dan Motzenbecker.
+
+Figwheel support is based on the brilliant solution developed by Will Decker [decker405/figwheel-react-native](https://github.com/decker405/figwheel-react-native),
+which works on both platforms.
+
 
 For more ClojureScript React Native resources visit [cljsrn.org](http://cljsrn.org).
 
-Contributions are welcome.
+Contributions are very welcome.
 
-## State
-- Uses React Native v0.40
-- Same codebase for iOS and Android
-- Figwheel used for REPL and live coding.
-  - Works in iOS (real device and simulator).
-  - Works in real Android device
-  - Works in Android simulator Genymotion (with re-natal use-android-device genymotion)
-  - Works in stock Android emulator (with re-natal use-android-device avd)
-  - Figwheel REPL can be started within nREPL
-  - Simultaneous development of iOS and Android apps is supported
-  - You can reload app any time, no problem.
-  - Custom react-native components are supported (with re-natal use-component <name>)
-  - Source maps are available when you "Debug in Chrome" (with re-natal enable-source-maps)
+## Status
+- Uses [React Native] v0.41.1
+- Reusable codebase between iOS and Android
+- Figwheel used for REPL and live coding
+  - Works in iOS (real device and simulator)
+  - Works in Android (real device and simulators, specifically AVD and Genymotion)
+  - Figwheel REPL can be started from within nREPL
+  - Simultaneous development of iOS and Android apps
+  - Manual reload and automatic hot reload
+  - Custom react-native components supported
+  - Source maps available
 - Supported React wrappers:
-[Reagent](https://github.com/reagent-project/reagent)
-[Om.Next](https://github.com/omcljs/om/wiki/Quick-Start-(om.next))
-[Rum](https://github.com/tonsky/rum)
-- Optimizations :simple is used to compile "production" index.ios.js and index.android.js
-- [Unified way of using static images of rn 0.14+](https://facebook.github.io/react-native/docs/images.html) works
-- Works on Linux and Windows (Android only)
+[Reagent], [Om.Next], and [Rum]
+- [Unified way of using static images of React Native 0.14+](https://facebook.github.io/react-native/docs/images.html) supported
 
-## Creating new project
+## Dependencies
+As Re-Natal is an orchestration of many individual tools, there are quite a few dependencies.
+If you've previously done React Native or Clojure development, you should hopefully
+have most installed already. Platform dependencies are listed under their respective tools.
+
+- [npm](https://www.npmjs.com) `>=1.4`
+    - [Node.js](https://nodejs.org) `>=4.0.0`
+- [react-native-cli](https://www.npmjs.com/package/react-native-cli) `>=0.1.7` (install with `npm install -g react-native-cli`)
+- [Leiningen](http://leiningen.org) `>=2.5.3`
+    - [Java 8](http://www.oracle.com/technetwork/java/javase/downloads/index.html)
+      
+For iOS  development:
+- [Xcode](https://developer.apple.com/xcode) (+ Command Line Tools) `>=6.3`
+    - [OS X](http://www.apple.com/osx) `>=10.10`
+
+## Creating a new project
 
 Before getting started, make sure you have the
 [required dependencies](#dependencies) installed.
@@ -55,12 +59,14 @@ Then, install the CLI using npm:
 $ npm install -g re-natal
 ```
 
-To bootstrap a new app, run `re-natal init` with your app's name as an argument:
+To generate a new app, run `re-natal init` with your app's name as an argument:
 
 ```
 $ re-natal init FutureApp
 ```
-Or, specify -i option to generate Om.Next, Reagent v0.6 or Rum project:
+
+This will generate a project which uses Reagent v0.5.1.  
+You may specify the -i option to choose a specific React wrapper: Om.Next, Reagent v0.6 or Rum:
 
 ```
 $ re-natal init FutureApp -i [om-next | reagent6 | rum]
@@ -69,156 +75,31 @@ $ re-natal init FutureApp -i [om-next | reagent6 | rum]
 If your app's name is more than a single word, be sure to type it in CamelCase.
 A corresponding hyphenated Clojure namespace will be created.
 
-The init process will take a few minutes — coffee break! If all goes well you should see printed out basic instructions how to run in iOS simulator.
-
-```
-$ cd future-app
-```
-To run in iOS:
-```
-$ react-native run-ios
-```
-To run in Android, connect your device and:
-```
-$ adb reverse tcp:8081 tcp:8081
-$ react-native run-android
-```
+The init process will take a few minutes — coffee break! If all goes well you should see basic instructions on how to run in iOS simulator.
 
 ## Development with Figwheel
 
-Initially the ClojureScript is compiled in "prod" profile, meaning `index.*.js` files
-are compiled with `optimizations :simple`.
-Development in such mode is not fun because of slow compilation and long reload time.
+Initially the `index.*.js` files are generated with the production profile, ready for deployment.  
+However, during development it is better to use the development profile and integrate with Figwheel. Switch to the development profile with:
 
-Luckily, this can be improved by compiling with `optimizations :none` and using
-Figwheel.
-
-Start your app from Xcode and pick a simulator target, or just run `react-native run-ios`
-
-Then, to start development mode execute commands:
-```
-$ re-natal use-figwheel
-$ lein figwheel ios
-```
-This will generate index.ios.js and index.android.js which works with compiler mode`optimizations :none`.
-
-NOTE: you might need to restart react native packager and reload your app in simulator.
-
-If all went well you should see REPL prompt and changes in source files
-should be hot-loaded by Figwheel.
-
-To disable Figwheel run `lein prod-build`
-
-#### Using external React Native Components
-
-Lets say you have installed an external library from npm like this:
-```
-$ npm i some-library --save
-```
-
-And you want to use a component called 'some-library/Component':
-```clojure
-(def Component (js/require "some-library/Component"))
-```
-This would work when you do `lein prod-build` and run your app, but will fail when you run with figwheel.
-React Native packager statically scans for all calls to `require` function and prepares the required
-code to be available at runtime. But, dynamically loaded (by figwheel) code bypass this scan
-and therefore require of custom component fails.
-
-To overcome this execute `use-component` command:
-```
-$ re-natal use-component some-library/Component
-```
-or for platform-specific lib use optional platform parameter:
-```
-$ re-natal use-component some-library/ComponentIOS ios"
-```
-Then, regenerate index.\*.js files:
 ```
 $ re-natal use-figwheel
 ```
-And last thing, probably, you will have to restart the packager and reload your app.
 
-NOTE: if you mistyped something, or no longer use the component and would like to remove it,
-please, manually open .re-natal file and fix it there (its just a list of names in json format, so should be straight forward)
+This command needs to be run every time you switch to the development profile or specify a development environment (with `use-ios-device` or `use-android-device`).
 
-#### Using real iOS device
+NOTE: You might need to restart React Native Packager and reload your app.
 
-Switch to using your iOS device: `re-natal use-ios-device real`.
-If this doesn't correctly detect your computer's IP you can pass your IP address explicitly: `re-natal use-ios-device IP`
+Start the Figwheel REPL with
 
-Then follow the remaining directions above for the iOS simulator except pick your connected device in Xcode
-
-#### Using real Android device
-To run figwheel with real Android device please read [Running on Device](https://facebook.github.io/react-native/docs/running-on-device-android.html#content).
-To make it work on USB connected device I had also to do the following:
 ```
-$ adb reverse tcp:8081 tcp:8081
-$ adb reverse tcp:3449 tcp:3449
-```
-Then:
-```
-$ re-natal use-figwheel
-$ lein figwheel android
-```
-And deploy your app:
-```
-$ react-native run-android
-```
-#### Using Genymotion simulator
-With genymotion Android simulator you have to use IP "10.0.3.2" in urls to refer to your local machine.
-To specify this use:
-```
-$ re-natal use-android-device genymotion
-$ re-natal use-figwheel
-$ lein figwheel android
-```
-Start your simulator and deploy your app:
-```
-$ react-native run-android
+$ lein figwheel [ios | android]
 ```
 
-#### Using stock Android emulator (AVD)
-With stock Android emulator you have to use IP "10.0.2.2" in urls to refer to your local machine.
-To specify this use:
-```
-$ re-natal use-android-device avd
-$ re-natal use-figwheel
-$ lein figwheel android
-```
-Start your simulator and deploy your app:
-```
-$ react-native run-android
-```
-#### Switching between Android devices
-Run `use-android-device` to configure device type you want to use in development:
-```
-$ re-natal use-android-device <real|genymotion|avd>
-$ re-natal use-figwheel
-$ lein figwheel android
-```
-
-#### Developing iOS and Android apps simultaneously
-```
-$ re-natal use-figwheel
-$ lein figwheel ios android
-```
-Then start iOS app from xcode, and Android by executing `react-native run-android`
-
-#### Faster Figwheel hot reloading
-Since version 0.22 React Native supports Hot Module Reload. But at least for now, this feature is useless
-as Figwheel is doing that as good.
-
-It looks like Figwheel reloads are faster if Hot Moduler Reload is OFF.
-Also, no need packager to watch for changed files - Figwheel does that.
-
-Two things you can do:
-
-1. Turn off HMR from the development menu.
-2. Start packager with option `--nonPersistent`. You can use `npm start` for that.
+If all went well you should see the REPL prompt and changes in source files should be hot-loaded by Figwheel.
 
 #### Starting Figwheel REPL from nREPL
-To start Figwheel within nREPL session:
+To start Figwheel from within nREPL session:
 ```
 $ lein repl
 ```
@@ -234,6 +115,141 @@ Or, for both type:
 ```
 user=> (start-figwheel "ios" "android")
 ```
+
+## Running the app
+### Note for Linux users
+On Linux, the React Native Packager has to be started manually with
+```
+react-native start
+```
+See [here](#running-on-linux) for more details.
+
+### iOS
+#### Using iOS simulator
+
+```
+re-natal use-ios-device simulator
+react-native run-ios
+```
+
+#### Using real iOS device
+
+```
+re-natal use-ios-device real
+```
+ 
+If this doesn't correctly detect your computer's IP you can pass your IP address explicitly: `re-natal use-ios-device <IP address>`.  
+And then run
+
+```
+react-native run-ios
+```
+
+---
+
+### Android
+
+#### Switching between Android devices
+Run `use-android-device` to configure device type you want to use in development:
+```
+$ re-natal use-ios-device <real|simulator>
+$ re-natal use-figwheel
+$ lein figwheel ios
+```
+
+#### Using Android Virtual Device (AVD)
+[Set up a virtual device in AVD](https://developer.android.com/studio/run/managing-avds.html). Start the virtual device then run
+```
+$ re-natal use-android-device avd
+$ re-natal use-figwheel
+$ lein figwheel android
+$ react-native run-android
+```
+
+#### Using Genymotion simulator
+Set up and start the Genymotion simulator then run
+```
+$ re-natal use-android-device genymotion
+$ re-natal use-figwheel
+$ lein figwheel android
+$ react-native run-android
+```
+
+#### Using real Android device
+To run figwheel with real Android device please read [Running on Device](https://facebook.github.io/react-native/docs/running-on-device-android.html#content).  
+To make it work on a USB connected device I also had to run:
+```
+$ adb reverse tcp:8081 tcp:8081
+$ adb reverse tcp:3449 tcp:3449
+```
+Then:
+```
+$ re-natal use-figwheel
+$ lein figwheel android
+$ react-native run-android
+```
+
+#### Switching between Android devices
+Run `use-android-device` to configure device type you want to use in development:
+```
+$ re-natal use-android-device <real|genymotion|avd>
+$ re-natal use-figwheel
+$ lein figwheel android
+```
+
+### Developing iOS and Android apps simultaneously
+```
+$ re-natal use-figwheel
+$ lein figwheel ios android
+```
+
+---
+
+### Using external React Native Components
+
+Lets say you have installed an external library from npm like this:
+```
+$ npm i some-library --save
+```
+
+And you want to use a component called 'some-library/Component':
+```clojure
+(def Component (js/require "some-library/Component"))
+```
+This would work when you do `lein prod-build` and run your app, but will fail when you run with Figwheel.
+The React Native packager statically scans for all calls to `require` and prepares the required
+code to be available at runtime. But, dynamically loaded (by Figwheel) code bypasses this scan
+and therefore requiring the custom component fails.
+
+To overcome this run `use-component`:
+```
+$ re-natal use-component some-library/Component
+```
+or for a platform-specific component use the optional platform parameter:
+```
+$ re-natal use-component some-library/ComponentIOS ios
+```
+Then, regenerate index.*.js files:
+```
+$ re-natal use-figwheel
+```
+Lastly, you will have to restart the packager and reload your app.
+
+NOTE: If you mistyped something, or no longer use the component and would like to remove it,
+ manually open `.re-natal` and fix it there (it's just a list of names in JSON format, so the process should be straight forward).
+
+---
+
+### Faster Figwheel hot reloading
+Since version 0.22 React Native supports Hot Module Reload. But at least for now, this feature is redundant because we have Figwheel.
+
+It looks like Figwheel reloads are faster if Hot Moduler Reload is OFF.
+Also, the packager is not necessary to watch for changed files - Figwheel does that (except on Linux).
+
+Two things you can do:
+
+1. Turn off HMR from the development menu.
+2. Start the packager with option `--nonPersistent`. You can use `npm start` for that.
 
 ## REPL
 You have to reload your app, and should see the REPL coming up with the prompt.
@@ -252,6 +268,7 @@ Try this command as an example:
 ```clojure
 (dispatch [:set-greeting "Hello Native World!"])
 ```
+
 ## Running on Linux
 In addition to the instructions above on Linux you might need to
 start React Native packager manually with command `react-native start`.
@@ -262,15 +279,12 @@ See this [tutorial](https://gadfly361.github.io/gadfly-blog/2016-11-13-clean-ins
 See also [Linux and Windows support](https://facebook.github.io/react-native/docs/linux-windows-support.html)
 in React Native docs.
 
-## "Prod" build
+## Production build
 Do this with command:
 ```
 $ lein prod-build
 ```
-It will clean and rebuild index.ios.js and index.android.js with `optimizations :simple`
-
-Having index.ios.js and index.android.js build this way, you should be able to
-follow the RN docs to proceed with the release.
+Follow the [React Native documentation](https://facebook.github.io/react-native/docs/signed-apk-android.html) to proceed with the release.
 
 ## Static Images
 Since version 0.14 React Native supports a [unified way of referencing static images](https://facebook.github.io/react-native/docs/images.html)
@@ -280,7 +294,7 @@ In Re-Natal skeleton images are stored in "images" directory. Place your images 
 (def my-img (js/require "./images/my-img.png"))
 ```
 #### Adding an image during development
-When you have dropped a new image to "images" dir, you need to restart RN packager and re-run command:
+When you have dropped a new image to "images" dir, you need to restart React Native packager and re-run command:
 ```
 $ re-natal use-figwheel
 ```
@@ -318,7 +332,7 @@ Then to continue development using figwheel
 $ re-natal use-figwheel
 ```
 
-### Enabling source maps when debugging in chrome
+## Enabling source maps when debugging in chrome
 To make source maps available in "Debug in Chrome" mode re-natal patches
 the react native packager to serve \*.map files from file system and generate only index.\*.map file.
 To achieve this [this line](https://github.com/facebook/react-native/blob/master/packager/react-packager/src/Server/index.js#L413)
@@ -334,7 +348,8 @@ You can undo this any time by deleting `node_modules` and running `re-natal deps
 * [Showcase of iOS navigation](https://github.com/seantempesta/om-next-react-native-router-flux) with react-native-router-flux and Om.Next
 * [Catlantis](https://github.com/madvas/catlantis) is a funny demo application about cats
 * [Lymchat](https://github.com/tiensonqin/lymchat) App to learn different cultures. Lym is available in [App Store](https://itunes.apple.com/us/app/lym/id1134985541?ls=1&mt=8).
-* [Status](https://status.im) ([Github](https://github.com/status-im/status-react/)): a web3 browser, messenger, and gateway to a decentralised world of Ethereum. re-natal + re-frame + cljs + golang
+* [Status](https://status.im) ([Github](https://github.com/status-im/status-react/)): a web3 browser, messenger, and gateway to a decentralised world of Ethereum. re-natal + re-frame + cljs + golang  
+* [React Native TodoMVC](https://github.com/TashaGospel/todo-mvc-re-natal) is a mobile application which attempts to implement TodoMVC in Clojurescript and React Native.
 
 ## Tips
 - Having `rlwrap` installed is optional but highly recommended since it makes
@@ -352,22 +367,7 @@ Packager so try to avoid doing so.
 then these commands might be useful for you:
     * `re-natal copy-figwheel-bridge` - just copies figwheel-bridge.js from current re-natal
 
-## Dependencies
-As Re-Natal is the orchestration of many individual tools, there are quite a few dependencies.
-If you've previously done React Native or Clojure development, you should hopefully
-have most installed already. Platform dependencies are listed under their respective
-tools.
-
-- [npm](https://www.npmjs.com) `>=1.4`
-    - [Node.js](https://nodejs.org) `>=4.0.0`
-- [react-native-cli](https://www.npmjs.com/package/react-native-cli) `>=0.1.7` (install with `npm install -g react-native-cli`)
-- [Leiningen](http://leiningen.org) `>=2.5.3`
-    - [Java 8](http://www.oracle.com/technetwork/java/javase/downloads/index.html)
-- [Xcode](https://developer.apple.com/xcode) (+ Command Line Tools) `>=6.3` (optional for Android)
-    - [OS X](http://www.apple.com/osx) `>=10.10`
-
-
-## Local Development
+## Local Development of Re-Natal
 
 If you would like to run any of this on your local environment first clone the code to an appropriate place on your machine and install dependencies
 
@@ -399,7 +399,7 @@ $ node ../re-natal/index.js
     deps                       install all dependencies for the project
     use-figwheel               generate index.ios.js and index.android.js for development with figwheel
     use-android-device <type>  sets up the host for android device type: 'real' - localhost, 'avd' - 10.0.2.2, 'genymotion' - 10.0.3.2
-    use-ios-device <type>      sets up the host for ios device type: 'simulator' - localhost, 'device' - auto detect IP on eth0, IP
+    use-ios-device <type>      sets up the host for ios device type: 'simulator' - localhost, 'real' - auto detect IP on eth0, IP
     use-component <name>       configures a custom component to work with figwheel. name is the value you pass to (js/require) function.
     enable-source-maps         patches RN packager to server *.map files from filesystem, so that chrome can download them.
     copy-figwheel-bridge       copy figwheel-bridge.js into project
@@ -411,3 +411,8 @@ $ node ../re-natal/index.js
 ```
 
 You can then run any of the commands manually.
+
+[React Native]: https://facebook.github.io/react-native
+[Reagent]: https://github.com/reagent-project/reagent
+[Om.Next]: https://github.com/omcljs/om/wiki/Quick-Start-(om.next)
+[Rum]: https://github.com/tonsky/rum
