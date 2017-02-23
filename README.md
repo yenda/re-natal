@@ -145,17 +145,17 @@ And then run
 react-native run-ios
 ```
 
----
-
-### Android
-
-#### Switching between Android devices
-Run `use-android-device` to configure device type you want to use in development:
+#### Switching between iOS devices
+Run `use-ios-device` to configure device type you want to use in development:
 ```
 $ re-natal use-ios-device <real|simulator>
 $ re-natal use-figwheel
 $ lein figwheel ios
 ```
+
+---
+
+### Android
 
 #### Using Android Virtual Device (AVD)
 [Set up a virtual device in AVD](https://developer.android.com/studio/run/managing-avds.html). Start the virtual device then run
