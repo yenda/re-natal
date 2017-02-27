@@ -184,6 +184,7 @@ $ adb reverse tcp:3449 tcp:3449
 ```
 Then:
 ```
+$ re-natal use-android-device real
 $ re-natal use-figwheel
 $ lein figwheel android
 $ react-native run-android
