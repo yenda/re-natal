@@ -22,9 +22,9 @@
 
 (defonce app-state (atom {:greeting "Hello Clojure in iOS and Android!"}))
 
-(defc AppRoot < rum/cursored-watch [state]
+(defc AppRoot < rum/reactive [state]
           (view {:style {:flexDirection "column" :margin 40 :alignItems "center"}}
-                (text {:style {:fontSize 30 :fontWeight "100" :marginBottom 20 :textAlign "center"}} (:greeting @state))
+                (text {:style {:fontSize 30 :fontWeight "100" :marginBottom 20 :textAlign "center"}} (:greeting (rum/react state)))
                 (image {:source logo-img
                         :style  {:width 80 :height 80 :marginBottom 30}})
                 (touchable-highlight {:style   {:backgroundColor "#999" :padding 10 :borderRadius 5}

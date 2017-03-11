@@ -30,7 +30,7 @@ ipAddressRx     = /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/i
 figwheelUrlRx   = /ws:\/\/[0-9a-zA-Z\.]*:/g
 appDelegateRx   = /http:\/\/[^:]+/g
 debugHostRx     = /host\s+=\s+@".*";/g
-rnVersion       = '0.41.1'
+rnVersion       = '0.42.0'
 rnPackagerPort  = 8081
 process.title   = 're-natal'
 interfaceConf   =
@@ -65,7 +65,7 @@ interfaceConf   =
       android: ["core.cljs"]
       common:  ["state.cljs"]
       other:   [["support.cljs","re_natal/support.cljs"]]
-    deps:      ['[org.omcljs/om "1.0.0-alpha41" :exclusions [cljsjs/react cljsjs/react-dom]]']
+    deps:      ['[org.omcljs/om "1.0.0-alpha48" :exclusions [cljsjs/react cljsjs/react-dom]]']
     shims:     ["cljsjs.react", "cljsjs.react.dom"]
     sampleCommandNs: '(in-ns \'$PROJECT_NAME_HYPHENATED$.state)'
     sampleCommand: '(swap! app-state assoc :app/msg "Hello Native World!")'
@@ -76,7 +76,7 @@ interfaceConf   =
       android: ["core.cljs"]
       common:  []
       other:   [["sablono_compiler.clj","sablono/compiler.clj"],["support.cljs","re_natal/support.cljs"]]
-    deps:      ['[rum "0.9.1" :exclusions [cljsjs/react cljsjs/react-dom sablono]]']
+    deps:      ['[rum "0.10.8" :exclusions [cljsjs/react cljsjs/react-dom sablono]]']
     shims:     ["cljsjs.react", "cljsjs.react.dom", "sablono.core"]
     sampleCommandNs: '(in-ns \'$PROJECT_NAME_HYPHENATED$.ios.core)'
     sampleCommand: '(swap! app-state assoc :greeting "Hello Clojure in iOS and Android with Rum!")'
