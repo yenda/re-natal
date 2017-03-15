@@ -323,7 +323,7 @@ updateGitIgnore = () ->
 patchReactNativePackager = () ->
   ckDeps.sync {install: true, verbose: false}
   log "Patching react-native packager to serve *.map files"
-  edit "node_modules/react-native/packager/react-packager/src/Server/index.js",
+  edit "node_modules/react-native/packager/src/Server/index.js",
     [[/match.*\.map\$\/\)/m, "match(/index\\..*\\.map$/)"]]
 
 shimCljsNamespace = (ns) ->
