@@ -8,7 +8,7 @@
                            $INTERFACE_DEPS$]
             :plugins [[lein-cljsbuild "1.1.4"]
                       [lein-figwheel "0.5.8"]]
-            :clean-targets ["target/" "index.ios.js" "index.android.js"]
+            :clean-targets ["target/" $PLATFORM_CLEAN$]
             :aliases {"prod-build" ^{:doc "Recompile code with prod profile."}
                                    ["do" "clean"
                                     ["with-profile" "prod" "cljsbuild" "once"]]}

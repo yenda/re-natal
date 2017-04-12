@@ -27,6 +27,7 @@ interfaceDepsRx = /\$INTERFACE_DEPS\$/g
 devProfilesRx   = /\$DEV_PROFILES\$/g
 prodProfilesRx  = /\$PROD_PROFILES\$/g
 platformRx      = /\$PLATFORM\$/g
+platformCleanRx = /\$PLATFORM_CLEAN\$/g
 devHostRx       = /\$DEV_HOST\$/g
 ipAddressRx     = /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/i
 figwheelUrlRx   = /ws:\/\/[0-9a-zA-Z\.]*:/g
@@ -377,7 +378,8 @@ copyProjectClj = (interfaceName, projNameHyph) ->
 
   fs.copySync("#{resources}/project.clj", "project.clj")
   deps = interfaceConf[interfaceName].deps.join("\n")
-  edit 'project.clj', [[projNameHyphRx, projNameHyph], [interfaceDepsRx, deps], [devProfilesRx, devProfiles.join("\n")], [prodProfilesRx, prodProfiles.join("\n")]]
+  cleans = platforms.map (platform) -> "\"index.#{platform}.js\""
+  edit 'project.clj', [[projNameHyphRx, projNameHyph], [interfaceDepsRx, deps], [platformCleanRx, cleans.join(' ')], [devProfilesRx, devProfiles.join("\n")], [prodProfilesRx, prodProfiles.join("\n")]]
 
 init = (interfaceName, projName) ->
   if projName.toLowerCase() is 'react' or !projName.match validNameRx
