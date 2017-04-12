@@ -42,6 +42,7 @@ interfaceConf   =
     sources:
       ios:     ["core.cljs"]
       android: ["core.cljs"]
+      windows: ["core.cljs"]
       common:  ["handlers.cljs", "subs.cljs", "db.cljs"]
       other:   []
     deps:      ['[reagent "0.5.1" :exclusions [cljsjs/react]]'
@@ -54,6 +55,7 @@ interfaceConf   =
     sources:
       ios:     ["core.cljs"]
       android: ["core.cljs"]
+      windows: ["core.cljs"]
       common:  ["events.cljs", "subs.cljs", "db.cljs"]
       other:   [["reagent_dom.cljs","reagent/dom.cljs"], ["reagent_dom_server.cljs","reagent/dom/server.cljs"]]
     deps:      ['[reagent "0.6.0" :exclusions [cljsjs/react cljsjs/react-dom cljsjs/react-dom-server]]'
@@ -66,6 +68,7 @@ interfaceConf   =
     sources:
       ios:     ["core.cljs"]
       android: ["core.cljs"]
+      windows: ["core.cljs"]
       common:  ["state.cljs"]
       other:   [["support.cljs","re_natal/support.cljs"]]
     deps:      ['[org.omcljs/om "1.0.0-alpha48" :exclusions [cljsjs/react cljsjs/react-dom]]']
@@ -75,8 +78,9 @@ interfaceConf   =
   'rum':
     cljsDir: "cljs-rum"
     sources:
-      ios: ["core.cljs"]
+      ios:     ["core.cljs"]
       android: ["core.cljs"]
+      windows: ["core.cljs"]
       common:  []
       other:   [["sablono_compiler.clj","sablono/compiler.clj"],["support.cljs","re_natal/support.cljs"]]
     deps:      ['[rum "0.10.8" :exclusions [cljsjs/react cljsjs/react-dom sablono]]']
@@ -417,7 +421,7 @@ init = (interfaceName, projName) ->
 
     log 'Creating React Native skeleton.'
 
-    fs.writeFileSync 'package.json', JSON.stringify
+    pkg =
       name:    projName
       version: '0.0.1'
       private: true
@@ -427,7 +431,11 @@ init = (interfaceName, projName) ->
         'react-native': rnVersion
         # Fixes issue with packager 'TimeoutError: transforming ... took longer than 301 seconds.'
         'babel-plugin-transform-es2015-block-scoping': '6.15.0'
-    , null, 2
+
+    if 'windows' in platforms
+      pkg.dependencies['react-native-windows'] = rnVersion
+
+    fs.writeFileSync 'package.json', JSON.stringify pkg, null, 2
 
     exec 'npm i'
 
@@ -435,6 +443,12 @@ init = (interfaceName, projName) ->
     exec "node -e
            \"require('react-native/local-cli/cli').init('.', '#{projName}')\"
            "
+
+    if 'windows' in platforms
+      log 'Creating React Native UWP skeleton.'
+      exec "node -e
+             \"require('react-native-windows/local-cli/generate-windows')('.', '#{projName}', '#{projName}')\"
+             "
 
     updateGitIgnore()
 
@@ -621,6 +635,7 @@ cli.version pkgJson.version
 cli.command 'init <name>'
   .description 'create a new ClojureScript React Native project'
   .option "-i, --interface [#{interfaceNames.join ' '}]", 'specify React interface', defaultInterface
+  .option '-u, --uwp', 'create skeleton for UWP'
   .action (name, cmd) ->
     if typeof name isnt 'string'
       logErr '''
@@ -630,6 +645,8 @@ cli.command 'init <name>'
              '''
     unless interfaceConf[cmd.interface]
       logErr "Unsupported React interface: #{cmd.interface}, one of [#{interfaceNames}] was expected."
+    if cmd.uwp?
+      platforms.push 'windows'
     ensureFreePort -> init(cmd.interface, name)
 
 cli.command 'upgrade'
