@@ -40,9 +40,6 @@ interfaceConf   =
   'reagent':
     cljsDir: "cljs-reagent"
     sources:
-      ios:     ["core.cljs"]
-      android: ["core.cljs"]
-      windows: ["core.cljs"]
       common:  ["handlers.cljs", "subs.cljs", "db.cljs"]
       other:   []
     deps:      ['[reagent "0.5.1" :exclusions [cljsjs/react]]'
@@ -53,9 +50,6 @@ interfaceConf   =
   'reagent6':
     cljsDir: "cljs-reagent6"
     sources:
-      ios:     ["core.cljs"]
-      android: ["core.cljs"]
-      windows: ["core.cljs"]
       common:  ["events.cljs", "subs.cljs", "db.cljs"]
       other:   [["reagent_dom.cljs","reagent/dom.cljs"], ["reagent_dom_server.cljs","reagent/dom/server.cljs"]]
     deps:      ['[reagent "0.6.0" :exclusions [cljsjs/react cljsjs/react-dom cljsjs/react-dom-server]]'
@@ -66,9 +60,6 @@ interfaceConf   =
   'om-next':
     cljsDir: "cljs-om-next"
     sources:
-      ios:     ["core.cljs"]
-      android: ["core.cljs"]
-      windows: ["core.cljs"]
       common:  ["state.cljs"]
       other:   [["support.cljs","re_natal/support.cljs"]]
     deps:      ['[org.omcljs/om "1.0.0-alpha48" :exclusions [cljsjs/react cljsjs/react-dom]]']
@@ -78,9 +69,6 @@ interfaceConf   =
   'rum':
     cljsDir: "cljs-rum"
     sources:
-      ios:     ["core.cljs"]
-      android: ["core.cljs"]
-      windows: ["core.cljs"]
       common:  []
       other:   [["sablono_compiler.clj","sablono/compiler.clj"],["support.cljs","re_natal/support.cljs"]]
     deps:      ['[rum "0.10.8" :exclusions [cljsjs/react cljsjs/react-dom sablono]]']
@@ -92,7 +80,17 @@ defaultInterface = 'reagent6'
 defaultEnvRoots  =
   dev: 'env/dev'
   prod: 'env/prod'
-platforms = ['ios', 'android']
+platformMeta     =
+  'ios':
+    name:     "iOS"
+    sources:  ["core.cljs"]
+  'android':
+    name:     "Android"
+    sources:  ["core.cljs"]
+  'windows':
+    name:     "UWP"
+    sources:  ["core.cljs"]
+platforms = []
 
 log = (s, color = 'green') ->
   console.log chalk[color] s
@@ -177,9 +175,10 @@ generateConfig = (interfaceName, projName) ->
     envRoots: defaultEnvRoots
     modules: []
     imageDirs: ["images"]
+    platforms: {}
 
   for platform in platforms
-    config["#{platform}Host"] = "localhost"
+    config.platforms[platform] = {"host": "localhost"}
 
   writeConfig config
   config
@@ -196,15 +195,8 @@ writeConfig = (config) ->
         message
 
 verifyConfig = (config) ->
-  upgradeMessage = 're-natal project needs to be upgraded, please run: re-natal upgrade'
-
-  if !config.modules? || !config.imageDirs? || !config.interface? || !config.envRoots?
-    throw new Error upgradeMessage
-
-  for platform in platforms
-    platformHost = "#{platform}Host"
-    if !config[platformHost]?
-      throw new Error upgradeMessage
+  if !config.platforms? || !config.modules? || !config.imageDirs? || !config.interface? || !config.envRoots?
+    throw new Error 're-natal project needs to be upgraded, please run: re-natal upgrade'
 
   config
 
@@ -264,7 +256,7 @@ configureDevHostForAndroidDevice = (deviceType) ->
   try
     devHost = resolveAndroidDevHost(deviceType)
     config = readConfig()
-    config.androidHost = devHost
+    config.android.host = devHost
     writeConfig(config)
     log "Please run: re-natal use-figwheel to take effect."
   catch {message}
@@ -285,7 +277,7 @@ configureDevHostForIosDevice = (deviceType) ->
   try
     devHost = resolveIosDevHost(deviceType)
     config = readConfig()
-    config.iosHost = devHost
+    config.ios.host = devHost
     writeConfig(config)
     log "Please run: re-natal use-figwheel to take effect."
   catch {message}
@@ -354,7 +346,7 @@ copySrcFiles = (interfaceName, projName, projNameUs, projNameHyph) ->
 
   for platform in platforms
     fs.mkdirSync "src/#{projNameUs}/#{platform}"
-    fileNames = interfaceConf[interfaceName].sources[platform]
+    fileNames = platformMeta[platform].sources
     for fileName in fileNames
       path = "src/#{projNameUs}/#{platform}/#{fileName}"
       fs.copySync("#{resources}/#{cljsDir}/#{fileName}", path)
@@ -540,6 +532,7 @@ platformModulesAndImages = (config, platform) ->
 generateDevScripts = () ->
   try
     config = readConfig()
+    platforms = Object.keys config.platforms
     projName = config.name
     devEnvRoot = config.envRoots.dev
 
@@ -552,7 +545,7 @@ generateDevScripts = () ->
 
     devHost = {}
     for platform in platforms
-      devHost[platform] = config["#{platform}Host"]
+      devHost[platform] = config.platforms[platform].host
 
     for platform in platforms
       moduleMap = generateRequireModulesCode(platformModulesAndImages(config, platform))
@@ -565,7 +558,7 @@ generateDevScripts = () ->
 
     updateFigwheelUrls(devEnvRoot, devHost)
     for platform in platforms
-      log "Dev server host for #{platform}: #{devHost[platform]}"
+      log "Dev server host for #{platformMeta[platform].name}: #{devHost[platform]}"
 
   catch {message}
     logErr \
@@ -591,10 +584,18 @@ doUpgrade = (config) ->
   unless config.envRoots
     config.envRoots = defaultEnvRoots
 
-  for platform in platforms
-    platformHost = "#{platform}Host"
-    unless config[platformHost]
-      config[platformHost] = "localhost"
+  unless config.platforms
+    config.platforms = {}
+    config.platforms.ios = {"host": "localhost"}
+    config.platforms.android = {"host": "localhost"}
+
+  if config.iosHost?
+    config.platforms.ios.host = config.iosHost
+    delete config.iosHost
+
+  if config.androidHost?
+    config.platforms.android.host = config.androidHost
+    delete config.androidHost
 
   writeConfig(config)
   log 'upgraded .re-natal'
@@ -613,6 +614,7 @@ doUpgrade = (config) ->
 useComponent = (name, platform) ->
   try
     config = readConfig()
+    platforms = Object.keys config.platforms
     if typeof platform isnt 'string'
       config.modules.push name
       log "Component '#{name}' is now configured for figwheel, please re-run 'use-figwheel' command to take effect"
@@ -645,6 +647,8 @@ cli.command 'init <name>'
              '''
     unless interfaceConf[cmd.interface]
       logErr "Unsupported React interface: #{cmd.interface}, one of [#{interfaceNames}] was expected."
+    platforms.push 'ios'
+    platforms.push 'android'
     if cmd.uwp?
       platforms.push 'windows'
     ensureFreePort -> init(cmd.interface, name)
