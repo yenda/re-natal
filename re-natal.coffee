@@ -531,12 +531,10 @@ updateIosRCTWebSocketExecutor = (iosHost) ->
 platformModulesAndImages = (config, platform) ->
   images = scanImages(config.imageDirs).map (fname) -> './' + fname;
   modulesAndImages = config.modules.concat images;
-  if typeof config.modulesPlatform is 'undefined'
-    config.modulesPlatform = {};
-  if typeof config.modulesPlatform is 'undefined' or typeof config.modulesPlatform[platform] is 'undefined'
+  if typeof config.platforms[platform].modules is 'undefined'
     modulesAndImages
   else
-    modulesAndImages.concat(config.modulesPlatform[platform])
+    modulesAndImages.concat(config.platforms[platform].modules)
 
 generateDevScripts = () ->
   try
@@ -628,11 +626,9 @@ useComponent = (name, platform) ->
       config.modules.push name
       log "Component '#{name}' is now configured for figwheel, please re-run 'use-figwheel' command to take effect"
     else if platforms.indexOf(platform) > -1
-      if typeof config.modulesPlatform is 'undefined'
-        config.modulesPlatform = {}
-      if typeof config.modulesPlatform[platform] is 'undefined'
-        config.modulesPlatform[platform] = []
-      config.modulesPlatform[platform].push name
+      if typeof config.platforms[platform].modules is 'undefined'
+        config.platforms[platform].modules = []
+      config.platforms[platform].modules.push name
       log "Component '#{name}' (#{platform}-only) is now configured for figwheel, please re-run 'use-figwheel' command to take effect"
     else
       throw new Error("unsupported platform: #{platform}")
