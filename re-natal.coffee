@@ -24,6 +24,8 @@ projNameRx      = /\$PROJECT_NAME\$/g
 projNameHyphRx  = /\$PROJECT_NAME_HYPHENATED\$/g
 projNameUsRx    = /\$PROJECT_NAME_UNDERSCORED\$/g
 interfaceDepsRx = /\$INTERFACE_DEPS\$/g
+devProfilesRx   = /\$DEV_PROFILES\$/g
+prodProfilesRx  = /\$PROD_PROFILES\$/g
 platformRx      = /\$PLATFORM\$/g
 devHostRx       = /\$DEV_HOST\$/g
 ipAddressRx     = /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/i
@@ -364,9 +366,18 @@ copySrcFiles = (interfaceName, projName, projNameUs, projNameHyph) ->
     shimCljsNamespace(namespace)
 
 copyProjectClj = (interfaceName, projNameHyph) ->
+  devProfileTemplate = readFile "#{resources}/dev.profile"
+  prodProfileTemplate = readFile "#{resources}/prod.profile"
+
+  devProfiles = []
+  prodProfiles = []
+  for platform in platforms
+    devProfiles.push devProfileTemplate.replace(platformRx, platform)
+    prodProfiles.push prodProfileTemplate.replace(platformRx, platform)
+
   fs.copySync("#{resources}/project.clj", "project.clj")
   deps = interfaceConf[interfaceName].deps.join("\n")
-  edit 'project.clj', [[projNameHyphRx, projNameHyph], [interfaceDepsRx, deps]]
+  edit 'project.clj', [[projNameHyphRx, projNameHyph], [interfaceDepsRx, deps], [devProfilesRx, devProfiles.join("\n")], [prodProfilesRx, prodProfiles.join("\n")]]
 
 init = (interfaceName, projName) ->
   if projName.toLowerCase() is 'react' or !projName.match validNameRx
@@ -394,7 +405,7 @@ init = (interfaceName, projName) ->
     fs.unlinkSync corePath
 
     copyProjectClj(interfaceName, projNameHyph)
-
+    
     copySrcFiles(interfaceName, projName, projNameUs, projNameHyph)
 
     copyDevEnvironmentFiles(interfaceName, projNameHyph, projName, defaultEnvRoots.dev, "localhost")
