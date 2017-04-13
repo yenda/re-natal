@@ -369,15 +369,11 @@ copyProjectClj = (interfaceName, projNameHyph) ->
   devProfileTemplate = readFile "#{resources}/dev.profile"
   prodProfileTemplate = readFile "#{resources}/prod.profile"
 
-  devProfiles = []
-  prodProfiles = []
-  for platform in platforms
-    devProfiles.push devProfileTemplate.replace(platformRx, platform)
-    prodProfiles.push prodProfileTemplate.replace(platformRx, platform)
-
   fs.copySync("#{resources}/project.clj", "project.clj")
   deps = interfaceConf[interfaceName].deps.join("\n")
   cleans = platforms.map (platform) -> "\"index.#{platform}.js\""
+  devProfiles = platforms.map (platform) -> devProfileTemplate.replace(platformRx, platform)
+  prodProfiles = platforms.map (platform) -> prodProfileTemplate.replace(platformRx, platform)
   edit 'project.clj', [[projNameHyphRx, projNameHyph], [interfaceDepsRx, deps], [platformCleanRx, cleans.join(' ')], [devProfilesRx, devProfiles.join("\n")], [prodProfilesRx, prodProfiles.join("\n")]]
 
 init = (interfaceName, projName) ->
@@ -592,9 +588,13 @@ doUpgrade = (config) ->
     config.envRoots = defaultEnvRoots
 
   unless config.platforms
-    config.platforms = {}
-    config.platforms.ios = {"host": "localhost"}
-    config.platforms.android = {"host": "localhost"}
+    config.platforms =
+      ios:
+        host: "localhost"
+        modules: []
+      android:
+        host: "localhost"
+        modules: []
 
   if config.iosHost?
     config.platforms.ios.host = config.iosHost
@@ -603,6 +603,15 @@ doUpgrade = (config) ->
   if config.androidHost?
     config.platforms.android.host = config.androidHost
     delete config.androidHost
+
+  if config.modulesPlatform?
+    if config.modulesPlatform.ios?
+      config.platforms.ios.modules = config.platforms.ios.modules.concat(config.modulesPlatform.ios)
+
+    if config.modulesPlatform.android?
+      config.platforms.android.modules = config.platforms.android.modules.concat(config.modulesPlatform.android)
+
+    delete config.modulesPlatform
 
   writeConfig(config)
   log 'upgraded .re-natal'
