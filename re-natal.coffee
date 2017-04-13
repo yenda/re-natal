@@ -333,7 +333,7 @@ updateGitIgnore = () ->
 
   indexFiles = platforms.map (platform) -> "index.#{platform}.js"
   fs.appendFileSync(".gitignore", indexFiles.join("\n"))
-  fs.appendFileSync(".gitignore", "target\n")
+  fs.appendFileSync(".gitignore", "\ntarget/\n")
 
   fs.appendFileSync(".gitignore", "\n# Figwheel\n#\nfigwheel_server.log")
 
@@ -564,7 +564,7 @@ addPlatform = (platform) ->
              \"require('react-native-windows/local-cli/generate-wpf')('.', '#{projName}', '#{projName}')\"
              "
 
-    fs.appendFileSync(".gitignore", "index.#{platform}.js\n")
+    fs.appendFileSync(".gitignore", "\n\nindex.#{platform}.js\n")
 
     config.platforms[platform] =
       host: "localhost"
