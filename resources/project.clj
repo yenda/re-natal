@@ -8,7 +8,7 @@
                            $INTERFACE_DEPS$]
             :plugins [[lein-cljsbuild "1.1.4"]
                       [lein-figwheel "0.5.8"]]
-            :clean-targets ["target/" $PLATFORM_CLEAN$]
+            :clean-targets ["target/" #_($PLATFORM_CLEAN$)]
             :aliases {"prod-build" ^{:doc "Recompile code with prod profile."}
                                    ["do" "clean"
                                     ["with-profile" "prod" "cljsbuild" "once"]]}
@@ -16,9 +16,9 @@
                                             [com.cemerick/piggieback "0.2.1"]]
                              :source-paths ["src" "env/dev"]
                              :cljsbuild    {:builds [
-$DEV_PROFILES$]}
+#_($DEV_PROFILES$)]}
                              :repl-options {:nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}}
                        :prod {:cljsbuild {:builds [
-$PROD_PROFILES$]}}})
+#_($PROD_PROFILES$)]}}})
                                                   
                       
