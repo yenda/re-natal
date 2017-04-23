@@ -25,6 +25,12 @@ projNameHyphRx  = /\$PROJECT_NAME_HYPHENATED\$/g
 projNameUsRx    = /\$PROJECT_NAME_UNDERSCORED\$/g
 interfaceDepsRx = /\$INTERFACE_DEPS\$/g
 platformRx      = /\$PLATFORM\$/g
+devProfilesRx   = /#_\(\$DEV_PROFILES\$\)/g
+devProfilesId   = "#_($DEV_PROFILES$)"
+prodProfilesRx  = /#_\(\$PROD_PROFILES\$\)/g
+prodProfilesId  = "#_($PROD_PROFILES$)"
+platformCleanRx = /#_\(\$PLATFORM_CLEAN\$\)/g
+platformCleanId = "#_($PLATFORM_CLEAN$)"
 devHostRx       = /\$DEV_HOST\$/g
 ipAddressRx     = /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/i
 figwheelUrlRx   = /ws:\/\/[0-9a-zA-Z\.]*:/g
@@ -37,8 +43,6 @@ interfaceConf   =
   'reagent':
     cljsDir: "cljs-reagent"
     sources:
-      ios:     ["core.cljs"]
-      android: ["core.cljs"]
       common:  ["handlers.cljs", "subs.cljs", "db.cljs"]
       other:   []
     deps:      ['[reagent "0.5.1" :exclusions [cljsjs/react]]'
@@ -49,8 +53,6 @@ interfaceConf   =
   'reagent6':
     cljsDir: "cljs-reagent6"
     sources:
-      ios:     ["core.cljs"]
-      android: ["core.cljs"]
       common:  ["events.cljs", "subs.cljs", "db.cljs"]
       other:   [["reagent_dom.cljs","reagent/dom.cljs"], ["reagent_dom_server.cljs","reagent/dom/server.cljs"]]
     deps:      ['[reagent "0.6.0" :exclusions [cljsjs/react cljsjs/react-dom cljsjs/react-dom-server]]'
@@ -61,8 +63,6 @@ interfaceConf   =
   'om-next':
     cljsDir: "cljs-om-next"
     sources:
-      ios:     ["core.cljs"]
-      android: ["core.cljs"]
       common:  ["state.cljs"]
       other:   [["support.cljs","re_natal/support.cljs"]]
     deps:      ['[org.omcljs/om "1.0.0-alpha48" :exclusions [cljsjs/react cljsjs/react-dom]]']
@@ -72,8 +72,6 @@ interfaceConf   =
   'rum':
     cljsDir: "cljs-rum"
     sources:
-      ios: ["core.cljs"]
-      android: ["core.cljs"]
       common:  []
       other:   [["sablono_compiler.clj","sablono/compiler.clj"],["support.cljs","re_natal/support.cljs"]]
     deps:      ['[rum "0.10.8" :exclusions [cljsjs/react cljsjs/react-dom sablono]]']
@@ -85,7 +83,20 @@ defaultInterface = 'reagent6'
 defaultEnvRoots  =
   dev: 'env/dev'
   prod: 'env/prod'
-platforms = ['ios', 'android']
+platformMeta     =
+  'ios':
+    name:     "iOS"
+    sources:  ["core.cljs"]
+  'android':
+    name:     "Android"
+    sources:  ["core.cljs"]
+  'windows':
+    name:     "UWP"
+    sources:  ["core.cljs"]
+  'wpf':
+    name:     "WPF"
+    sources:  ["core.cljs"]
+platforms = []
 
 log = (s, color = 'green') ->
   console.log chalk[color] s
@@ -167,11 +178,15 @@ generateConfig = (interfaceName, projName) ->
   config =
     name:   projName
     interface: interfaceName
-    androidHost: "localhost"
-    iosHost: "localhost"
     envRoots: defaultEnvRoots
     modules: []
     imageDirs: ["images"]
+    platforms: {}
+
+  for platform in platforms
+    config.platforms[platform] = 
+      host: "localhost"
+      modules: []
 
   writeConfig config
   config
@@ -188,8 +203,9 @@ writeConfig = (config) ->
         message
 
 verifyConfig = (config) ->
-  if !config.androidHost? || !config.modules? || !config.imageDirs? || !config.interface? || !config.iosHost? || !config.envRoots?
+  if !config.platforms? || !config.modules? || !config.imageDirs? || !config.interface? || !config.envRoots?
     throw new Error 're-natal project needs to be upgraded, please run: re-natal upgrade'
+
   config
 
 readConfig = (verify = true)->
@@ -216,7 +232,7 @@ scanImageDir = (dir) ->
     .filter (path) -> fs.statSync(path).isFile()
     .filter (path) -> removeExcludeFiles(path)
     .map (path) -> path.replace /@2x|@3x/i, ''
-    .map (path) -> path.replace new RegExp(".(android|ios)" + fpath.extname(path) + "$", "i"), fpath.extname(path)
+    .map (path) -> path.replace new RegExp(".(#{platforms.join('|')})" + fpath.extname(path) + "$", "i"), fpath.extname(path)
     .filter (v, idx, slf) -> slf.indexOf(v) == idx
 
   dirs = fs.readdirSync(dir)
@@ -248,7 +264,7 @@ configureDevHostForAndroidDevice = (deviceType) ->
   try
     devHost = resolveAndroidDevHost(deviceType)
     config = readConfig()
-    config.androidHost = devHost
+    config.android.host = devHost
     writeConfig(config)
     log "Please run: re-natal use-figwheel to take effect."
   catch {message}
@@ -269,7 +285,7 @@ configureDevHostForIosDevice = (deviceType) ->
   try
     devHost = resolveIosDevHost(deviceType)
     config = readConfig()
-    config.iosHost = devHost
+    config.ios.host = devHost
     writeConfig(config)
     log "Please run: re-natal use-figwheel to take effect."
   catch {message}
@@ -283,41 +299,42 @@ deviceTypeIsIpAddress = (deviceType, allowedTypes) ->
     log("Value '#{deviceType}' is not a valid IP address, still configured it as development host. Did you mean one of: [#{allowedTypes}] ?", 'yellow')
     deviceType
 
-copyDevEnvironmentFiles = (interfaceName, projNameHyph, projName, devEnvRoot, devHost) ->
-  fs.mkdirpSync "#{devEnvRoot}/env/ios"
-  fs.mkdirpSync "#{devEnvRoot}/env/android"
+copyDevEnvironmentFilesForPlatform = (platform, interfaceName, projNameHyph, projName, devEnvRoot, devHost) ->
+  cljsDir = interfaceConf[interfaceName].cljsDir
+  fs.mkdirpSync "#{devEnvRoot}/env/#{platform}"
+  mainDevPath = "#{devEnvRoot}/env/#{platform}/main.cljs"
+  fs.copySync("#{resources}/#{cljsDir}/main_dev.cljs", mainDevPath)
+  edit mainDevPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName], [platformRx, platform], [devHostRx, devHost]]
 
+copyDevEnvironmentFiles = (interfaceName, projNameHyph, projName, devEnvRoot, devHost) ->
   userNsPath = "#{devEnvRoot}/user.clj"
   fs.copySync("#{resources}/user.clj", userNsPath)
 
-  mainIosDevPath = "#{devEnvRoot}/env/ios/main.cljs"
-  mainAndroidDevPath = "#{devEnvRoot}/env/android/main.cljs"
+  for platform in platforms
+    copyDevEnvironmentFilesForPlatform platform, interfaceName, projNameHyph, projName, devEnvRoot, devHost
 
+copyProdEnvironmentFilesForPlatform = (platform, interfaceName, projNameHyph, projName, prodEnvRoot) ->
   cljsDir = interfaceConf[interfaceName].cljsDir
-  fs.copySync("#{resources}/#{cljsDir}/main_dev.cljs", mainIosDevPath)
-  edit mainIosDevPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName], [platformRx, "ios"], [devHostRx, devHost] ]
-  fs.copySync("#{resources}/#{cljsDir}/main_dev.cljs", mainAndroidDevPath)
-  edit mainAndroidDevPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName], [platformRx, "android"], [devHostRx, devHost]]
+  fs.mkdirpSync "#{prodEnvRoot}/env/#{platform}"
+  mainProdPath = "#{prodEnvRoot}/env/#{platform}/main.cljs"
+  fs.copySync("#{resources}/#{cljsDir}/main_prod.cljs", mainProdPath)
+  edit mainProdPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName], [platformRx, platform]]
 
 copyProdEnvironmentFiles = (interfaceName, projNameHyph, projName, prodEnvRoot) ->
-  fs.mkdirpSync "#{prodEnvRoot}/env/ios"
-  fs.mkdirpSync "#{prodEnvRoot}/env/android"
-
-  mainIosProdPath = "#{prodEnvRoot}/env/ios/main.cljs"
-  mainAndroidProdPath = "#{prodEnvRoot}/env/android/main.cljs"
-
-  cljsDir = interfaceConf[interfaceName].cljsDir
-  fs.copySync("#{resources}/#{cljsDir}/main_prod.cljs", mainIosProdPath)
-  edit mainIosProdPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName], [platformRx, "ios"]]
-  fs.copySync("#{resources}/#{cljsDir}/main_prod.cljs", mainAndroidProdPath)
-  edit mainAndroidProdPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName], [platformRx, "android"]]
+  for platform in platforms
+    copyProdEnvironmentFilesForPlatform platform, interfaceName, projNameHyph, projName, prodEnvRoot
 
 copyFigwheelBridge = (projNameUs) ->
   fs.copySync("#{resources}/figwheel-bridge.js", "./figwheel-bridge.js")
   edit "figwheel-bridge.js", [[projNameUsRx, projNameUs]]
 
 updateGitIgnore = () ->
-  fs.appendFileSync(".gitignore", "\n# Generated by re-natal\n#\nindex.android.js\nindex.ios.js\ntarget/\n")
+  fs.appendFileSync(".gitignore", "\n# Generated by re-natal\n#\n")
+
+  indexFiles = platforms.map (platform) -> "index.#{platform}.js"
+  fs.appendFileSync(".gitignore", indexFiles.join("\n"))
+  fs.appendFileSync(".gitignore", "\ntarget/\n")
+
   fs.appendFileSync(".gitignore", "\n# Figwheel\n#\nfigwheel_server.log")
 
 patchReactNativePackager = () ->
@@ -331,6 +348,15 @@ shimCljsNamespace = (ns) ->
   fs.mkdirpSync fpath.dirname(filePath)
   fs.writeFileSync(filePath, "(ns #{ns})")
 
+copySrcFilesForPlatform = (platform, interfaceName, projName, projNameUs, projNameHyph) ->
+  cljsDir = interfaceConf[interfaceName].cljsDir
+  fs.mkdirSync "src/#{projNameUs}/#{platform}"
+  fileNames = platformMeta[platform].sources
+  for fileName in fileNames
+    path = "src/#{projNameUs}/#{platform}/#{fileName}"
+    fs.copySync("#{resources}/#{cljsDir}/#{fileName}", path)
+    edit path, [[projNameHyphRx, projNameHyph], [projNameRx, projName], [platformRx, platform]]
+
 copySrcFiles = (interfaceName, projName, projNameUs, projNameHyph) ->
   cljsDir = interfaceConf[interfaceName].cljsDir
 
@@ -341,12 +367,7 @@ copySrcFiles = (interfaceName, projName, projNameUs, projNameHyph) ->
     edit path, [[projNameHyphRx, projNameHyph], [projNameRx, projName]]
 
   for platform in platforms
-    fs.mkdirSync "src/#{projNameUs}/#{platform}"
-    fileNames = interfaceConf[interfaceName].sources[platform]
-    for fileName in fileNames
-      path = "src/#{projNameUs}/#{platform}/#{fileName}"
-      fs.copySync("#{resources}/#{cljsDir}/#{fileName}", path)
-      edit path, [[projNameHyphRx, projNameHyph], [projNameRx, projName], [platformRx, platform]]
+    copySrcFilesForPlatform platform, interfaceName, projName, projNameUs, projNameHyph
 
   otherFiles = interfaceConf[interfaceName].sources.other;
   for cpFile in otherFiles
@@ -361,7 +382,36 @@ copySrcFiles = (interfaceName, projName, projNameUs, projNameHyph) ->
 copyProjectClj = (interfaceName, projNameHyph) ->
   fs.copySync("#{resources}/project.clj", "project.clj")
   deps = interfaceConf[interfaceName].deps.join("\n")
-  edit 'project.clj', [[projNameHyphRx, projNameHyph], [interfaceDepsRx, deps]]
+
+  cleans = platforms.map (platform) -> "\"index.#{platform}.js\""
+  cleans.push platformCleanId
+
+  devProfileTemplate = readFile "#{resources}/dev.profile"
+  devProfiles = platforms.map (platform) -> devProfileTemplate.replace(platformRx, platform)
+  devProfiles.push devProfilesId
+
+  prodProfileTemplate = readFile "#{resources}/prod.profile"
+  prodProfiles = platforms.map (platform) -> prodProfileTemplate.replace(platformRx, platform)
+  prodProfiles.push prodProfilesId
+
+  edit 'project.clj', [[projNameHyphRx, projNameHyph], [interfaceDepsRx, deps], [platformCleanRx, cleans.join(' ')], [devProfilesRx, devProfiles.join("\n")], [prodProfilesRx, prodProfiles.join("\n")]]
+
+updateProjectClj = (platform) ->
+  cleans = []
+  cleans.push "\"index.#{platform}.js\""
+  cleans.push platformCleanId
+
+  devProfileTemplate = readFile "#{resources}/dev.profile"
+  devProfiles = []
+  devProfiles.push devProfileTemplate.replace(platformRx, platform)
+  devProfiles.push devProfilesId
+
+  prodProfileTemplate = readFile "#{resources}/prod.profile"
+  prodProfiles = []
+  prodProfiles.push prodProfileTemplate.replace(platformRx, platform)
+  prodProfiles.push prodProfilesId
+
+  edit 'project.clj', [[platformCleanRx, cleans.join(' ')], [devProfilesRx, devProfiles.join("\n")], [prodProfilesRx, prodProfiles.join("\n")]]
 
 init = (interfaceName, projName) ->
   if projName.toLowerCase() is 'react' or !projName.match validNameRx
@@ -389,7 +439,7 @@ init = (interfaceName, projName) ->
     fs.unlinkSync corePath
 
     copyProjectClj(interfaceName, projNameHyph)
-
+    
     copySrcFiles(interfaceName, projName, projNameUs, projNameHyph)
 
     copyDevEnvironmentFiles(interfaceName, projNameHyph, projName, defaultEnvRoots.dev, "localhost")
@@ -399,7 +449,7 @@ init = (interfaceName, projName) ->
 
     log 'Creating React Native skeleton.'
 
-    fs.writeFileSync 'package.json', JSON.stringify
+    pkg =
       name:    projName
       version: '0.0.1'
       private: true
@@ -409,7 +459,11 @@ init = (interfaceName, projName) ->
         'react-native': rnVersion
         # Fixes issue with packager 'TimeoutError: transforming ... took longer than 301 seconds.'
         'babel-plugin-transform-es2015-block-scoping': '6.15.0'
-    , null, 2
+
+    if 'windows' in platforms || 'wpf' in platforms
+      pkg.dependencies['react-native-windows'] = rnVersion
+
+    fs.writeFileSync 'package.json', JSON.stringify pkg, null, 2
 
     exec 'npm i'
 
@@ -417,6 +471,18 @@ init = (interfaceName, projName) ->
     exec "node -e
            \"require('react-native/local-cli/cli').init('.', '#{projName}')\"
            "
+
+    if 'windows' in platforms
+      log 'Creating React Native UWP project.'
+      exec "node -e
+             \"require('react-native-windows/local-cli/generate-windows')('.', '#{projName}', '#{projName}')\"
+             "
+
+    if 'wpf' in platforms
+      log 'Creating React Native WPF project.'
+      exec "node -e
+             \"require('react-native-windows/local-cli/generate-wpf')('.', '#{projName}', '#{projName}')\"
+             "
 
     updateGitIgnore()
 
@@ -460,6 +526,55 @@ init = (interfaceName, projName) ->
       else
         message
 
+addPlatform = (platform) ->
+  config = readConfig()
+  platforms = Object.keys config.platforms
+
+  if platform in platforms
+    log "A project for a #{platformMeta[platform].name} app already exists"
+  else
+    interfaceName = config.interface
+    projName      = config.name
+    projNameHyph  = projName.replace(camelRx, '$1-$2').toLowerCase()
+    projNameUs    = toUnderscored projName
+
+    log "Preparing for #{platformMeta[platform].name} app."
+
+    updateProjectClj(platform)
+    copySrcFilesForPlatform(platform, interfaceName, projName, projNameUs, projNameHyph)
+    copyDevEnvironmentFilesForPlatform(platform, interfaceName, projNameHyph, projName, defaultEnvRoots.dev, "localhost")
+    copyProdEnvironmentFilesForPlatform(platform, interfaceName, projNameHyph, projName, defaultEnvRoots.prod)
+
+    pkg = JSON.parse readFile 'package.json'
+  
+    unless 'react-native-windows' in pkg.dependencies
+      pkg.dependencies['react-native-windows'] = rnVersion
+      fs.writeFileSync 'package.json', JSON.stringify pkg, null, 2
+      exec 'npm i'
+
+    if platform is 'windows'
+      log 'Creating React Native UWP project.'
+      exec "node -e
+             \"require('react-native-windows/local-cli/generate-windows')('.', '#{projName}', '#{projName}')\"
+             "
+
+    if platform is 'wpf'
+      log 'Creating React Native WPF project.'
+      exec "node -e
+             \"require('react-native-windows/local-cli/generate-wpf')('.', '#{projName}', '#{projName}')\"
+             "
+
+    fs.appendFileSync(".gitignore", "\n\nindex.#{platform}.js\n")
+
+    config.platforms[platform] =
+      host: "localhost"
+      modules: []
+
+    writeConfig(config)
+
+    log 'Compiling ClojureScript'
+    exec 'lein prod-build'
+
 openXcode = (name) ->
   try
     exec "open ios/#{name}.xcodeproj"
@@ -481,12 +596,10 @@ generateRequireModulesCode = (modules) ->
     jsCode += "modules['#{m}']=require('#{m}');";
   jsCode += '\n'
 
-updateFigwheelUrls = (devEnvRoot, androidHost, iosHost) ->
-  mainAndroidDevPath = "#{devEnvRoot}/env/android/main.cljs"
-  edit mainAndroidDevPath, [[figwheelUrlRx, "ws://#{androidHost}:"]]
-
-  mainIosDevPath = "#{devEnvRoot}/env/ios/main.cljs"
-  edit mainIosDevPath, [[figwheelUrlRx, "ws://#{iosHost}:"]]
+updateFigwheelUrls = (devEnvRoot, devHost) ->
+  for platform in platforms
+    mainDevPath = "#{devEnvRoot}/env/#{platform}/main.cljs"
+    edit mainDevPath, [[figwheelUrlRx, "ws://#{devHost[platform]}:"]]
 
 # Current RN version (0.29.2) has no host in AppDelegate.m maybe docs are outdated?
 updateIosAppDelegate = (projName, iosHost) ->
@@ -500,16 +613,15 @@ updateIosRCTWebSocketExecutor = (iosHost) ->
 platformModulesAndImages = (config, platform) ->
   images = scanImages(config.imageDirs).map (fname) -> './' + fname;
   modulesAndImages = config.modules.concat images;
-  if typeof config.modulesPlatform is 'undefined'
-    config.modulesPlatform = {};
-  if typeof config.modulesPlatform is 'undefined' or typeof config.modulesPlatform[platform] is 'undefined'
+  if typeof config.platforms[platform].modules is 'undefined'
     modulesAndImages
   else
-    modulesAndImages.concat(config.modulesPlatform[platform])
+    modulesAndImages.concat(config.platforms[platform].modules)
 
 generateDevScripts = () ->
   try
     config = readConfig()
+    platforms = Object.keys config.platforms
     projName = config.name
     devEnvRoot = config.envRoots.dev
 
@@ -520,22 +632,22 @@ generateDevScripts = () ->
     log 'Cleaning...'
     exec 'lein clean'
 
-    androidDevHost = config.androidHost
-    iosDevHost = config.iosHost
-    devHost =  {'android' : androidDevHost, 'ios' : iosDevHost}
+    devHost = {}
+    for platform in platforms
+      devHost[platform] = config.platforms[platform].host
 
     for platform in platforms
       moduleMap = generateRequireModulesCode(platformModulesAndImages(config, platform))
       fs.writeFileSync "index.#{platform}.js", "#{moduleMap}require('figwheel-bridge').withModules(modules).start('#{projName}','#{platform}','#{devHost[platform]}');"
       log "index.#{platform}.js was regenerated"
 
-    #updateIosAppDelegate(projName, iosDevHost)
-    updateIosRCTWebSocketExecutor(iosDevHost)
+    #updateIosAppDelegate(projName, devHost.ios)
+    updateIosRCTWebSocketExecutor(devHost.ios)
     log "Host in RCTWebSocketExecutor.m was updated"
 
-    updateFigwheelUrls(devEnvRoot, androidDevHost, iosDevHost)
-    log 'Dev server host for iOS: ' + iosDevHost
-    log 'Dev server host for Android: ' + androidDevHost
+    updateFigwheelUrls(devEnvRoot, devHost)
+    for platform in platforms
+      log "Dev server host for #{platformMeta[platform].name}: #{devHost[platform]}"
 
   catch {message}
     logErr \
@@ -558,14 +670,34 @@ doUpgrade = (config) ->
   unless config.imageDirs
     config.imageDirs = ["images"]
 
-  unless config.androidHost
-    config.androidHost = "localhost"
-
-  unless config.iosHost
-    config.iosHost = "localhost"
-
   unless config.envRoots
     config.envRoots = defaultEnvRoots
+
+  unless config.platforms
+    config.platforms =
+      ios:
+        host: "localhost"
+        modules: []
+      android:
+        host: "localhost"
+        modules: []
+
+  if config.iosHost?
+    config.platforms.ios.host = config.iosHost
+    delete config.iosHost
+
+  if config.androidHost?
+    config.platforms.android.host = config.androidHost
+    delete config.androidHost
+
+  if config.modulesPlatform?
+    if config.modulesPlatform.ios?
+      config.platforms.ios.modules = config.platforms.ios.modules.concat(config.modulesPlatform.ios)
+
+    if config.modulesPlatform.android?
+      config.platforms.android.modules = config.platforms.android.modules.concat(config.modulesPlatform.android)
+
+    delete config.modulesPlatform
 
   writeConfig(config)
   log 'upgraded .re-natal'
@@ -584,15 +716,14 @@ doUpgrade = (config) ->
 useComponent = (name, platform) ->
   try
     config = readConfig()
+    platforms = Object.keys config.platforms
     if typeof platform isnt 'string'
       config.modules.push name
       log "Component '#{name}' is now configured for figwheel, please re-run 'use-figwheel' command to take effect"
     else if platforms.indexOf(platform) > -1
-      if typeof config.modulesPlatform is 'undefined'
-        config.modulesPlatform = {}
-      if typeof config.modulesPlatform[platform] is 'undefined'
-        config.modulesPlatform[platform] = []
-      config.modulesPlatform[platform].push name
+      if typeof config.platforms[platform].modules is 'undefined'
+        config.platforms[platform].modules = []
+      config.platforms[platform].modules.push name
       log "Component '#{name}' (#{platform}-only) is now configured for figwheel, please re-run 'use-figwheel' command to take effect"
     else
       throw new Error("unsupported platform: #{platform}")
@@ -606,6 +737,8 @@ cli.version pkgJson.version
 cli.command 'init <name>'
   .description 'create a new ClojureScript React Native project'
   .option "-i, --interface [#{interfaceNames.join ' '}]", 'specify React interface', defaultInterface
+  .option '-u, --uwp', 'create project for UWP app'
+  .option '-w, --wpf', 'create project for WPF app'
   .action (name, cmd) ->
     if typeof name isnt 'string'
       logErr '''
@@ -615,12 +748,28 @@ cli.command 'init <name>'
              '''
     unless interfaceConf[cmd.interface]
       logErr "Unsupported React interface: #{cmd.interface}, one of [#{interfaceNames}] was expected."
+    platforms.push 'ios'
+    platforms.push 'android'
+    if cmd.uwp?
+      platforms.push 'windows'
+    if cmd.wpf?
+      platforms.push 'wpf'
     ensureFreePort -> init(cmd.interface, name)
 
 cli.command 'upgrade'
 .description 'upgrades project files to current installed version of re-natal (the upgrade of re-natal itself is done via npm)'
 .action ->
   doUpgrade readConfig(false)
+
+cli.command 'windows'
+  .description 'add project for UWP app'
+  .action ->
+    addPlatform('windows')
+
+cli.command 'wpf'
+  .description 'add project for WPF app'
+  .action ->
+    addPlatform('wpf')
 
 cli.command 'xcode'
   .description 'open Xcode project'
@@ -635,7 +784,7 @@ cli.command 'deps'
     ckDeps.sync {install: true, verbose: true}
 
 cli.command 'use-figwheel'
-  .description 'generate index.ios.js and index.android.js for development with figwheel'
+  .description 'generate index.*.js for development with figwheel'
   .action () ->
     generateDevScripts()
 
