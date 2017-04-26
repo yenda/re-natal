@@ -264,7 +264,7 @@ configureDevHostForAndroidDevice = (deviceType) ->
   try
     devHost = resolveAndroidDevHost(deviceType)
     config = readConfig()
-    config.android.host = devHost
+    config.platforms.android.host = devHost
     writeConfig(config)
     log "Please run: re-natal use-figwheel to take effect."
   catch {message}
@@ -285,7 +285,7 @@ configureDevHostForIosDevice = (deviceType) ->
   try
     devHost = resolveIosDevHost(deviceType)
     config = readConfig()
-    config.ios.host = devHost
+    config.platforms.ios.host = devHost
     writeConfig(config)
     log "Please run: re-natal use-figwheel to take effect."
   catch {message}
