@@ -31,6 +31,7 @@ Contributions are very welcome.
   - Source maps available
 - Supported React wrappers:
 [Reagent], [Om.Next], and [Rum]
+- Support of windows (UPV and WPF) apps
 - [Unified way of using static images of React Native 0.14+](https://facebook.github.io/react-native/docs/images.html) supported
 
 ## Dependencies
@@ -65,7 +66,7 @@ To generate a new app, run `re-natal init` with your app's name as an argument:
 $ re-natal init FutureApp
 ```
 
-This will generate a project which uses Reagent v0.5.1.  
+This will generate a project which uses Reagent v0.6.  
 You may specify the -i option to choose a specific React wrapper: Om.Next, Reagent v0.6 or Rum:
 
 ```
@@ -239,18 +240,6 @@ Lastly, you will have to restart the packager and reload your app.
 NOTE: If you mistyped something, or no longer use the component and would like to remove it,
  manually open `.re-natal` and fix it there (it's just a list of names in JSON format, so the process should be straight forward).
 
----
-
-### Faster Figwheel hot reloading
-Since version 0.22 React Native supports Hot Module Reload. But at least for now, this feature is redundant because we have Figwheel.
-
-It looks like Figwheel reloads are faster if Hot Moduler Reload is OFF.
-Also, the packager is not necessary to watch for changed files - Figwheel does that (except on Linux).
-
-Two things you can do:
-
-1. Turn off HMR from the development menu.
-2. Start the packager with option `--nonPersistent`. You can use `npm start` for that.
 
 ## REPL
 You have to reload your app, and should see the REPL coming up with the prompt.
@@ -279,6 +268,29 @@ See this [tutorial](https://gadfly361.github.io/gadfly-blog/2016-11-13-clean-ins
 
 See also [Linux and Windows support](https://facebook.github.io/react-native/docs/linux-windows-support.html)
 in React Native docs.
+
+## Support of UWP and WPF apps (using react-native-windows)
+
+To start new project with UWP app:
+```
+$ re-natal init FutureApp -u
+```  
+
+To start new project with WPF app:
+```
+$ re-natal init FutureApp -w
+```  
+
+Existing projects can also add windows platforms any time using commands:
+```
+$ re-natal windows
+
+or
+
+$ re-natal wpf
+```  
+Note: for projects generated with re-natal version prior to 0.4.0 additional windows builds will not be added automatically to `project.clj`. 
+Workaround is to generate fresh windows project and copy-paste additional builds manually.  
 
 ## Production build
 Do this with command:
