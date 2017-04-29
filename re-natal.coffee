@@ -36,7 +36,7 @@ ipAddressRx     = /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/i
 figwheelUrlRx   = /ws:\/\/[0-9a-zA-Z\.]*:/g
 appDelegateRx   = /http:\/\/[^:]+/g
 debugHostRx     = /host\s+=\s+@".*";/g
-rnVersion       = '0.42.0'
+rnVersion       = '0.43.4'
 rnPackagerPort  = 8081
 process.title   = 're-natal'
 interfaceConf   =
