@@ -397,19 +397,33 @@ copyProjectClj = (interfaceName, projNameHyph) ->
   edit 'project.clj', [[projNameHyphRx, projNameHyph], [interfaceDepsRx, deps], [platformCleanRx, cleans.join(' ')], [devProfilesRx, devProfiles.join("\n")], [prodProfilesRx, prodProfiles.join("\n")]]
 
 updateProjectClj = (platform) ->
+  proj = readFile('project.clj')
+
   cleans = []
   cleans.push "\"index.#{platform}.js\""
   cleans.push platformCleanId
+
+  if !proj.match(platformCleanRx)
+    log "Manual update of project.clj required: add clean targets:"
+    log "#{cleans.join(' ')}", "red"
 
   devProfileTemplate = readFile "#{resources}/dev.profile"
   devProfiles = []
   devProfiles.push devProfileTemplate.replace(platformRx, platform)
   devProfiles.push devProfilesId
 
+  if !proj.match(devProfilesRx)
+    log "Manual update of project.clj required: add new build to dev profile:"
+    log "#{devProfiles.join('\n')}", "red"
+
   prodProfileTemplate = readFile "#{resources}/prod.profile"
   prodProfiles = []
   prodProfiles.push prodProfileTemplate.replace(platformRx, platform)
   prodProfiles.push prodProfilesId
+
+  if !proj.match(prodProfilesRx)
+    log "Manual update of project.clj required: add new build to prod profile:"
+    log "#{prodProfiles.join('\n')}", "red"
 
   edit 'project.clj', [[platformCleanRx, cleans.join(' ')], [devProfilesRx, devProfiles.join("\n")], [prodProfilesRx, prodProfiles.join("\n")]]
 
