@@ -37,6 +37,7 @@ figwheelUrlRx   = /ws:\/\/[0-9a-zA-Z\.]*:/g
 appDelegateRx   = /http:\/\/[^:]+/g
 debugHostRx     = /host\s+=\s+@".*";/g
 rnVersion       = '0.43.4'
+rnWinVersion    = '0.42.0'
 rnPackagerPort  = 8081
 process.title   = 're-natal'
 interfaceConf   =
@@ -475,7 +476,7 @@ init = (interfaceName, projName) ->
         'babel-plugin-transform-es2015-block-scoping': '6.15.0'
 
     if 'windows' in platforms || 'wpf' in platforms
-      pkg.dependencies['react-native-windows'] = rnVersion
+      pkg.dependencies['react-native-windows'] = rnWinVersion
 
     fs.writeFileSync 'package.json', JSON.stringify pkg, null, 2
 
@@ -562,7 +563,7 @@ addPlatform = (platform) ->
     pkg = JSON.parse readFile 'package.json'
   
     unless 'react-native-windows' in pkg.dependencies
-      pkg.dependencies['react-native-windows'] = rnVersion
+      pkg.dependencies['react-native-windows'] = rnWinVersion
       fs.writeFileSync 'package.json', JSON.stringify pkg, null, 2
       exec 'npm i'
 
