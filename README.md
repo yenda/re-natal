@@ -283,11 +283,11 @@ $ re-natal init FutureApp -w
 
 Existing projects can also add windows platforms any time using commands:
 ```
-$ re-natal windows
+$ re-natal add-platform windows
 
 or
 
-$ re-natal wpf
+$ re-natal add-platform wpf
 ```  
 Note: for projects generated with re-natal version prior to 0.4.0 additional windows builds will not be added automatically to `project.clj`. 
 Workaround is to generate fresh windows project and copy-paste additional builds manually.  
