@@ -542,53 +542,59 @@ init = (interfaceName, projName) ->
         message
 
 addPlatform = (platform) ->
-  config = readConfig()
-  platforms = Object.keys config.platforms
+  try
+    if !(platform of platformMeta)
+      throw new Error "Unknown platform [#{platform}]"
 
-  if platform in platforms
-    log "A project for a #{platformMeta[platform].name} app already exists"
-  else
-    interfaceName = config.interface
-    projName      = config.name
-    projNameHyph  = projName.replace(camelRx, '$1-$2').toLowerCase()
-    projNameUs    = toUnderscored projName
+    config = readConfig()
+    platforms = Object.keys config.platforms
 
-    log "Preparing for #{platformMeta[platform].name} app."
+    if platform in platforms
+      throw new Error "A project for a #{platformMeta[platform].name} app already exists"
+    else
+      interfaceName = config.interface
+      projName      = config.name
+      projNameHyph  = projName.replace(camelRx, '$1-$2').toLowerCase()
+      projNameUs    = toUnderscored projName
 
-    updateProjectClj(platform)
-    copySrcFilesForPlatform(platform, interfaceName, projName, projNameUs, projNameHyph)
-    copyDevEnvironmentFilesForPlatform(platform, interfaceName, projNameHyph, projName, defaultEnvRoots.dev, "localhost")
-    copyProdEnvironmentFilesForPlatform(platform, interfaceName, projNameHyph, projName, defaultEnvRoots.prod)
+      log "Preparing for #{platformMeta[platform].name} app."
 
-    pkg = JSON.parse readFile 'package.json'
-  
-    unless 'react-native-windows' in pkg.dependencies
-      pkg.dependencies['react-native-windows'] = rnWinVersion
-      fs.writeFileSync 'package.json', JSON.stringify pkg, null, 2
-      exec 'npm i'
+      updateProjectClj(platform)
+      copySrcFilesForPlatform(platform, interfaceName, projName, projNameUs, projNameHyph)
+      copyDevEnvironmentFilesForPlatform(platform, interfaceName, projNameHyph, projName, defaultEnvRoots.dev, "localhost")
+      copyProdEnvironmentFilesForPlatform(platform, interfaceName, projNameHyph, projName, defaultEnvRoots.prod)
 
-    if platform is 'windows'
-      log 'Creating React Native UWP project.'
-      exec "node -e
-             \"require('react-native-windows/local-cli/generate-windows')('.', '#{projName}', '#{projName}')\"
-             "
+      pkg = JSON.parse readFile 'package.json'
 
-    if platform is 'wpf'
-      log 'Creating React Native WPF project.'
-      exec "node -e
-             \"require('react-native-windows/local-cli/generate-wpf')('.', '#{projName}', '#{projName}')\"
-             "
+      unless 'react-native-windows' in pkg.dependencies
+        pkg.dependencies['react-native-windows'] = rnWinVersion
+        fs.writeFileSync 'package.json', JSON.stringify pkg, null, 2
+        exec 'npm i'
 
-    fs.appendFileSync(".gitignore", "\n\nindex.#{platform}.js\n")
+      if platform is 'windows'
+        log 'Creating React Native UWP project.'
+        exec "node -e
+               \"require('react-native-windows/local-cli/generate-windows')('.', '#{projName}', '#{projName}')\"
+               "
 
-    config.platforms[platform] =
-      host: "localhost"
-      modules: []
+      if platform is 'wpf'
+        log 'Creating React Native WPF project.'
+        exec "node -e
+               \"require('react-native-windows/local-cli/generate-wpf')('.', '#{projName}', '#{projName}')\"
+               "
 
-    writeConfig(config)
+      fs.appendFileSync(".gitignore", "\n\nindex.#{platform}.js\n")
 
-    log 'Compiling ClojureScript'
-    exec 'lein prod-build'
+      config.platforms[platform] =
+        host: "localhost"
+        modules: []
+
+      writeConfig(config)
+
+      log 'Compiling ClojureScript'
+      exec 'lein prod-build'
+  catch {message}
+    logErr message
 
 openXcode = (name) ->
   try
@@ -776,15 +782,10 @@ cli.command 'upgrade'
 .action ->
   doUpgrade readConfig(false)
 
-cli.command 'windows'
-  .description 'add project for UWP app'
-  .action ->
-    addPlatform('windows')
-
-cli.command 'wpf'
-  .description 'add project for WPF app'
-  .action ->
-    addPlatform('wpf')
+cli.command 'add-platform <platform>'
+  .description 'adds additional app platform: \'windows\' - UWP app, \'wpf\' - WPF app'
+  .action (platform) ->
+    addPlatform(platform)
 
 cli.command 'xcode'
   .description 'open Xcode project'
