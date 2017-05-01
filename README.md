@@ -406,16 +406,17 @@ $ node ../re-natal/index.js
 
   Commands:
 
-    init [options] <name>      create a new ClojureScript React Native project
-    upgrade                    upgrades project files to current installed version of re-natal (the upgrade of re-natal itself is done via npm)
-    xcode                      open Xcode project
-    deps                       install all dependencies for the project
-    use-figwheel               generate index.ios.js and index.android.js for development with figwheel
-    use-android-device <type>  sets up the host for android device type: 'real' - localhost, 'avd' - 10.0.2.2, 'genymotion' - 10.0.3.2
-    use-ios-device <type>      sets up the host for ios device type: 'simulator' - localhost, 'real' - auto detect IP on eth0, IP
-    use-component <name>       configures a custom component to work with figwheel. name is the value you pass to (js/require) function.
-    enable-source-maps         patches RN packager to server *.map files from filesystem, so that chrome can download them.
-    copy-figwheel-bridge       copy figwheel-bridge.js into project
+    init [options] <name>              create a new ClojureScript React Native project
+    upgrade                            upgrades project files to current installed version of re-natal (the upgrade of re-natal itself is done via npm)
+    add-platform <platform>            adds additional app platform: 'windows' - UWP app, 'wpf' - WPF app
+    xcode                              open Xcode project
+    deps                               install all dependencies for the project
+    use-figwheel                       generate index.*.js for development with figwheel
+    use-android-device <type>          sets up the host for android device type: 'real' - localhost, 'avd' - 10.0.2.2, 'genymotion' - 10.0.3.2, IP
+    use-ios-device <type>              sets up the host for ios device type: 'simulator' - localhost, 'real' - auto detect IP on eth0, IP
+    use-component <name> [<platform>]  configures a custom component to work with figwheel. name is the value you pass to (js/require) function.
+    enable-source-maps                 patches RN packager to server *.map files from filesystem, so that chrome can download them.
+    copy-figwheel-bridge               copy figwheel-bridge.js into project
 
   Options:
 
