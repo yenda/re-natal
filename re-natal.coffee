@@ -36,7 +36,8 @@ ipAddressRx     = /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/i
 figwheelUrlRx   = /ws:\/\/[0-9a-zA-Z\.]*:/g
 appDelegateRx   = /http:\/\/[^:]+/g
 debugHostRx     = /host\s+=\s+@".*";/g
-rnVersion       = '0.42.0'
+rnVersion       = '0.43.4'
+rnWinVersion    = '0.42.0'
 rnPackagerPort  = 8081
 process.title   = 're-natal'
 interfaceConf   =
@@ -55,8 +56,8 @@ interfaceConf   =
     sources:
       common:  ["events.cljs", "subs.cljs", "db.cljs"]
       other:   [["reagent_dom.cljs","reagent/dom.cljs"], ["reagent_dom_server.cljs","reagent/dom/server.cljs"]]
-    deps:      ['[reagent "0.6.0" :exclusions [cljsjs/react cljsjs/react-dom cljsjs/react-dom-server]]'
-      '[re-frame "0.8.0"]']
+    deps:      ['[reagent "0.6.1" :exclusions [cljsjs/react cljsjs/react-dom cljsjs/react-dom-server]]'
+                '[re-frame "0.9.2"]']
     shims:     ["cljsjs.react", "cljsjs.react.dom", "cljsjs.react.dom.server"]
     sampleCommandNs: '(in-ns \'$PROJECT_NAME_HYPHENATED$.ios.core)'
     sampleCommand: '(dispatch [:set-greeting "Hello Native World!"])'
@@ -264,7 +265,7 @@ configureDevHostForAndroidDevice = (deviceType) ->
   try
     devHost = resolveAndroidDevHost(deviceType)
     config = readConfig()
-    config.android.host = devHost
+    config.platforms.android.host = devHost
     writeConfig(config)
     log "Please run: re-natal use-figwheel to take effect."
   catch {message}
@@ -285,7 +286,7 @@ configureDevHostForIosDevice = (deviceType) ->
   try
     devHost = resolveIosDevHost(deviceType)
     config = readConfig()
-    config.ios.host = devHost
+    config.platforms.ios.host = devHost
     writeConfig(config)
     log "Please run: re-natal use-figwheel to take effect."
   catch {message}
@@ -397,19 +398,33 @@ copyProjectClj = (interfaceName, projNameHyph) ->
   edit 'project.clj', [[projNameHyphRx, projNameHyph], [interfaceDepsRx, deps], [platformCleanRx, cleans.join(' ')], [devProfilesRx, devProfiles.join("\n")], [prodProfilesRx, prodProfiles.join("\n")]]
 
 updateProjectClj = (platform) ->
+  proj = readFile('project.clj')
+
   cleans = []
   cleans.push "\"index.#{platform}.js\""
   cleans.push platformCleanId
+
+  if !proj.match(platformCleanRx)
+    log "Manual update of project.clj required: add clean targets:"
+    log "#{cleans.join(' ')}", "red"
 
   devProfileTemplate = readFile "#{resources}/dev.profile"
   devProfiles = []
   devProfiles.push devProfileTemplate.replace(platformRx, platform)
   devProfiles.push devProfilesId
 
+  if !proj.match(devProfilesRx)
+    log "Manual update of project.clj required: add new build to dev profile:"
+    log "#{devProfiles.join('\n')}", "red"
+
   prodProfileTemplate = readFile "#{resources}/prod.profile"
   prodProfiles = []
   prodProfiles.push prodProfileTemplate.replace(platformRx, platform)
   prodProfiles.push prodProfilesId
+
+  if !proj.match(prodProfilesRx)
+    log "Manual update of project.clj required: add new build to prod profile:"
+    log "#{prodProfiles.join('\n')}", "red"
 
   edit 'project.clj', [[platformCleanRx, cleans.join(' ')], [devProfilesRx, devProfiles.join("\n")], [prodProfilesRx, prodProfiles.join("\n")]]
 
@@ -461,7 +476,7 @@ init = (interfaceName, projName) ->
         'babel-plugin-transform-es2015-block-scoping': '6.15.0'
 
     if 'windows' in platforms || 'wpf' in platforms
-      pkg.dependencies['react-native-windows'] = rnVersion
+      pkg.dependencies['react-native-windows'] = rnWinVersion
 
     fs.writeFileSync 'package.json', JSON.stringify pkg, null, 2
 
@@ -527,53 +542,59 @@ init = (interfaceName, projName) ->
         message
 
 addPlatform = (platform) ->
-  config = readConfig()
-  platforms = Object.keys config.platforms
+  try
+    if !(platform of platformMeta)
+      throw new Error "Unknown platform [#{platform}]"
 
-  if platform in platforms
-    log "A project for a #{platformMeta[platform].name} app already exists"
-  else
-    interfaceName = config.interface
-    projName      = config.name
-    projNameHyph  = projName.replace(camelRx, '$1-$2').toLowerCase()
-    projNameUs    = toUnderscored projName
+    config = readConfig()
+    platforms = Object.keys config.platforms
 
-    log "Preparing for #{platformMeta[platform].name} app."
+    if platform in platforms
+      throw new Error "A project for a #{platformMeta[platform].name} app already exists"
+    else
+      interfaceName = config.interface
+      projName      = config.name
+      projNameHyph  = projName.replace(camelRx, '$1-$2').toLowerCase()
+      projNameUs    = toUnderscored projName
 
-    updateProjectClj(platform)
-    copySrcFilesForPlatform(platform, interfaceName, projName, projNameUs, projNameHyph)
-    copyDevEnvironmentFilesForPlatform(platform, interfaceName, projNameHyph, projName, defaultEnvRoots.dev, "localhost")
-    copyProdEnvironmentFilesForPlatform(platform, interfaceName, projNameHyph, projName, defaultEnvRoots.prod)
+      log "Preparing for #{platformMeta[platform].name} app."
 
-    pkg = JSON.parse readFile 'package.json'
-  
-    unless 'react-native-windows' in pkg.dependencies
-      pkg.dependencies['react-native-windows'] = rnVersion
-      fs.writeFileSync 'package.json', JSON.stringify pkg, null, 2
-      exec 'npm i'
+      updateProjectClj(platform)
+      copySrcFilesForPlatform(platform, interfaceName, projName, projNameUs, projNameHyph)
+      copyDevEnvironmentFilesForPlatform(platform, interfaceName, projNameHyph, projName, defaultEnvRoots.dev, "localhost")
+      copyProdEnvironmentFilesForPlatform(platform, interfaceName, projNameHyph, projName, defaultEnvRoots.prod)
 
-    if platform is 'windows'
-      log 'Creating React Native UWP project.'
-      exec "node -e
-             \"require('react-native-windows/local-cli/generate-windows')('.', '#{projName}', '#{projName}')\"
-             "
+      pkg = JSON.parse readFile 'package.json'
 
-    if platform is 'wpf'
-      log 'Creating React Native WPF project.'
-      exec "node -e
-             \"require('react-native-windows/local-cli/generate-wpf')('.', '#{projName}', '#{projName}')\"
-             "
+      unless 'react-native-windows' in pkg.dependencies
+        pkg.dependencies['react-native-windows'] = rnWinVersion
+        fs.writeFileSync 'package.json', JSON.stringify pkg, null, 2
+        exec 'npm i'
 
-    fs.appendFileSync(".gitignore", "\n\nindex.#{platform}.js\n")
+      if platform is 'windows'
+        log 'Creating React Native UWP project.'
+        exec "node -e
+               \"require('react-native-windows/local-cli/generate-windows')('.', '#{projName}', '#{projName}')\"
+               "
 
-    config.platforms[platform] =
-      host: "localhost"
-      modules: []
+      if platform is 'wpf'
+        log 'Creating React Native WPF project.'
+        exec "node -e
+               \"require('react-native-windows/local-cli/generate-wpf')('.', '#{projName}', '#{projName}')\"
+               "
 
-    writeConfig(config)
+      fs.appendFileSync(".gitignore", "\n\nindex.#{platform}.js\n")
 
-    log 'Compiling ClojureScript'
-    exec 'lein prod-build'
+      config.platforms[platform] =
+        host: "localhost"
+        modules: []
+
+      writeConfig(config)
+
+      log 'Compiling ClojureScript'
+      exec 'lein prod-build'
+  catch {message}
+    logErr message
 
 openXcode = (name) ->
   try
@@ -761,15 +782,10 @@ cli.command 'upgrade'
 .action ->
   doUpgrade readConfig(false)
 
-cli.command 'windows'
-  .description 'add project for UWP app'
-  .action ->
-    addPlatform('windows')
-
-cli.command 'wpf'
-  .description 'add project for WPF app'
-  .action ->
-    addPlatform('wpf')
+cli.command 'add-platform <platform>'
+  .description 'adds additional app platform: \'windows\' - UWP app, \'wpf\' - WPF app'
+  .action (platform) ->
+    addPlatform(platform)
 
 cli.command 'xcode'
   .description 'open Xcode project'

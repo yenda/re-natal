@@ -19,7 +19,7 @@ For more ClojureScript React Native resources visit [cljsrn.org](http://cljsrn.o
 Contributions are very welcome.
 
 ## Status
-- Uses [React Native] v0.42.0
+- Uses [React Native] v0.43.4
 - Reusable codebase between iOS and Android
 - Figwheel used for REPL and live coding
   - Works in iOS (real device and simulator)
@@ -31,6 +31,7 @@ Contributions are very welcome.
   - Source maps available
 - Supported React wrappers:
 [Reagent], [Om.Next], and [Rum]
+- Support of windows (UWP and WPF) apps
 - [Unified way of using static images of React Native 0.14+](https://facebook.github.io/react-native/docs/images.html) supported
 
 ## Dependencies
@@ -65,7 +66,7 @@ To generate a new app, run `re-natal init` with your app's name as an argument:
 $ re-natal init FutureApp
 ```
 
-This will generate a project which uses Reagent v0.5.1.  
+This will generate a project which uses Reagent v0.6.  
 You may specify the -i option to choose a specific React wrapper: Om.Next, Reagent v0.6 or Rum:
 
 ```
@@ -239,18 +240,6 @@ Lastly, you will have to restart the packager and reload your app.
 NOTE: If you mistyped something, or no longer use the component and would like to remove it,
  manually open `.re-natal` and fix it there (it's just a list of names in JSON format, so the process should be straight forward).
 
----
-
-### Faster Figwheel hot reloading
-Since version 0.22 React Native supports Hot Module Reload. But at least for now, this feature is redundant because we have Figwheel.
-
-It looks like Figwheel reloads are faster if Hot Moduler Reload is OFF.
-Also, the packager is not necessary to watch for changed files - Figwheel does that (except on Linux).
-
-Two things you can do:
-
-1. Turn off HMR from the development menu.
-2. Start the packager with option `--nonPersistent`. You can use `npm start` for that.
 
 ## REPL
 You have to reload your app, and should see the REPL coming up with the prompt.
@@ -279,6 +268,29 @@ See this [tutorial](https://gadfly361.github.io/gadfly-blog/2016-11-13-clean-ins
 
 See also [Linux and Windows support](https://facebook.github.io/react-native/docs/linux-windows-support.html)
 in React Native docs.
+
+## Support of UWP and WPF apps (using react-native-windows)
+
+To start new project with UWP app:
+```
+$ re-natal init FutureApp -u
+```  
+
+To start new project with WPF app:
+```
+$ re-natal init FutureApp -w
+```  
+
+Existing projects can also add windows platforms any time using commands:
+```
+$ re-natal add-platform windows
+
+or
+
+$ re-natal add-platform wpf
+```  
+Note: for projects generated with re-natal version prior to 0.4.0 additional windows builds will not be added automatically to `project.clj`. 
+Workaround is to generate fresh windows project and copy-paste additional builds manually.  
 
 ## Production build
 Do this with command:
@@ -394,16 +406,17 @@ $ node ../re-natal/index.js
 
   Commands:
 
-    init [options] <name>      create a new ClojureScript React Native project
-    upgrade                    upgrades project files to current installed version of re-natal (the upgrade of re-natal itself is done via npm)
-    xcode                      open Xcode project
-    deps                       install all dependencies for the project
-    use-figwheel               generate index.ios.js and index.android.js for development with figwheel
-    use-android-device <type>  sets up the host for android device type: 'real' - localhost, 'avd' - 10.0.2.2, 'genymotion' - 10.0.3.2
-    use-ios-device <type>      sets up the host for ios device type: 'simulator' - localhost, 'real' - auto detect IP on eth0, IP
-    use-component <name>       configures a custom component to work with figwheel. name is the value you pass to (js/require) function.
-    enable-source-maps         patches RN packager to server *.map files from filesystem, so that chrome can download them.
-    copy-figwheel-bridge       copy figwheel-bridge.js into project
+    init [options] <name>              create a new ClojureScript React Native project
+    upgrade                            upgrades project files to current installed version of re-natal (the upgrade of re-natal itself is done via npm)
+    add-platform <platform>            adds additional app platform: 'windows' - UWP app, 'wpf' - WPF app
+    xcode                              open Xcode project
+    deps                               install all dependencies for the project
+    use-figwheel                       generate index.*.js for development with figwheel
+    use-android-device <type>          sets up the host for android device type: 'real' - localhost, 'avd' - 10.0.2.2, 'genymotion' - 10.0.3.2, IP
+    use-ios-device <type>              sets up the host for ios device type: 'simulator' - localhost, 'real' - auto detect IP on eth0, IP
+    use-component <name> [<platform>]  configures a custom component to work with figwheel. name is the value you pass to (js/require) function.
+    enable-source-maps                 patches RN packager to server *.map files from filesystem, so that chrome can download them.
+    copy-figwheel-bridge               copy figwheel-bridge.js into project
 
   Options:
 
