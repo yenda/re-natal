@@ -31,7 +31,7 @@ Contributions are very welcome.
   - Source maps available
 - Supported React wrappers:
 [Reagent], [Om.Next], and [Rum]
-- Support of windows (UPV and WPF) apps
+- Support of windows (UWP and WPF) apps
 - [Unified way of using static images of React Native 0.14+](https://facebook.github.io/react-native/docs/images.html) supported
 
 ## Dependencies
