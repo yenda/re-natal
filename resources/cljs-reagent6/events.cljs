@@ -1,7 +1,7 @@
 (ns $PROJECT_NAME_HYPHENATED$.events
   (:require
    [re-frame.core :refer [reg-event-db after]]
-   [clojure.spec :as s]
+   [clojure.spec.alpha :as s]
    [$PROJECT_NAME_HYPHENATED$.db :as db :refer [app-db]]))
 
 ;; -- Interceptors ------------------------------------------------------------
