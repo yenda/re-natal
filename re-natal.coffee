@@ -66,7 +66,7 @@ interfaceConf   =
     sources:
       common:  ["state.cljs"]
       other:   [["support.cljs","re_natal/support.cljs"]]
-    deps:      ['[org.omcljs/om "1.0.0-alpha48" :exclusions [cljsjs/react cljsjs/react-dom]]']
+    deps:      ['[org.omcljs/om "1.0.0-beta1" :exclusions [cljsjs/react cljsjs/react-dom]]']
     shims:     ["cljsjs.react", "cljsjs.react.dom"]
     sampleCommandNs: '(in-ns \'$PROJECT_NAME_HYPHENATED$.state)'
     sampleCommand: '(swap! app-state assoc :app/msg "Hello Native World!")'
