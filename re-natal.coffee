@@ -110,7 +110,7 @@ logErr = (err, color = 'red') ->
 
 exec = (cmd, keepOutput) ->
   if keepOutput
-    child.execSync cmd
+    child.execSync cmd, stdio: 'inherit'
   else
     child.execSync cmd, stdio: 'ignore'
 
@@ -122,6 +122,26 @@ ensureExecutableAvailable = (executable) ->
       throw new Error("type: #{executable}: not found")
   else
     exec "type #{executable}"
+
+isYarnAvailable = () ->
+  try
+    ensureExecutableAvailable('yarn')
+    true
+  catch e
+    false
+
+isSomeDepsMissing = () ->
+  depState = ckDeps.sync {install: false, verbose: false}
+  !depState.depsWereOk
+
+installDeps = (opts = verbose: false, report: false) ->
+  {verbose, report} = opts
+  if report
+    ckDeps.sync (install: false, verbose: true)
+  if isYarnAvailable()
+    exec 'yarn', verbose
+  else
+    exec 'npm i', verbose
 
 ensureOSX = (cb) ->
   if os.platform() == 'darwin'
@@ -185,7 +205,7 @@ generateConfig = (interfaceName, projName) ->
     platforms: {}
 
   for platform in platforms
-    config.platforms[platform] = 
+    config.platforms[platform] =
       host: "localhost"
       modules: []
 
@@ -339,7 +359,7 @@ updateGitIgnore = () ->
   fs.appendFileSync(".gitignore", "\n# Figwheel\n#\nfigwheel_server.log")
 
 patchReactNativePackager = () ->
-  ckDeps.sync {install: true, verbose: false}
+  installDeps()
   log "Patching react-native packager to serve *.map files"
   edit "node_modules/react-native/packager/src/Server/index.js",
     [[/match.*\.map\$\/\)/m, "match(/index\\..*\\.map$/)"]]
@@ -437,7 +457,10 @@ init = (interfaceName, projName) ->
 
   try
     log "Creating #{projName}", 'bgMagenta'
-    log '\u2615  Grab a coffee! Downloading deps might take a while...', 'yellow'
+    if isYarnAvailable()
+      log '\u2615  Grab a coffee! I will use yarn, but fetching deps still takes time...', 'yellow'
+    else
+      log '\u2615  Grab a coffee! Downloading deps might take a while...', 'yellow'
 
     if fs.existsSync projNameHyph
       throw new Error "Directory #{projNameHyph} already exists"
@@ -454,7 +477,7 @@ init = (interfaceName, projName) ->
     fs.unlinkSync corePath
 
     copyProjectClj(interfaceName, projNameHyph)
-    
+
     copySrcFiles(interfaceName, projName, projNameUs, projNameHyph)
 
     copyDevEnvironmentFiles(interfaceName, projNameHyph, projName, defaultEnvRoots.dev, "localhost")
@@ -480,7 +503,7 @@ init = (interfaceName, projName) ->
 
     fs.writeFileSync 'package.json', JSON.stringify pkg, null, 2
 
-    exec 'npm i'
+    installDeps()
 
     fs.unlinkSync '.gitignore'
     exec "node -e
@@ -569,7 +592,7 @@ addPlatform = (platform) ->
       unless 'react-native-windows' in pkg.dependencies
         pkg.dependencies['react-native-windows'] = rnWinVersion
         fs.writeFileSync 'package.json', JSON.stringify pkg, null, 2
-        exec 'npm i'
+        installDeps()
 
       if platform is 'windows'
         log 'Creating React Native UWP project.'
@@ -646,9 +669,8 @@ generateDevScripts = () ->
     projName = config.name
     devEnvRoot = config.envRoots.dev
 
-    depState = ckDeps.sync {install: false, verbose: false}
-    if (!depState.depsWereOk)
-      throw new Error "Missing dependencies, please run: re-natal deps"
+    if isSomeDepsMissing()
+      installDeps(verbose: true)
 
     log 'Cleaning...'
     exec 'lein clean'
@@ -797,7 +819,7 @@ cli.command 'xcode'
 cli.command 'deps'
   .description 'install all dependencies for the project'
   .action ->
-    ckDeps.sync {install: true, verbose: true}
+    installDeps(verbose: true, report: true)
 
 cli.command 'use-figwheel'
   .description 'generate index.*.js for development with figwheel'
