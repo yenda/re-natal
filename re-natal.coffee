@@ -670,7 +670,7 @@ generateDevScripts = () ->
     devEnvRoot = config.envRoots.dev
 
     if isSomeDepsMissing()
-      installDeps()
+      installDeps(verbose: true)
 
     log 'Cleaning...'
     exec 'lein clean'
