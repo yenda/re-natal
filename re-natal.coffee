@@ -492,7 +492,7 @@ init = (interfaceName, projName) ->
       version: '0.0.1'
       private: true
       scripts:
-        start: 'node_modules/react-native/packager/packager.sh --nonPersistent'
+        start: 'node_modules/react-native/packager/packager.sh'
       dependencies:
         'react-native': rnVersion
         # Fixes issue with packager 'TimeoutError: transforming ... took longer than 301 seconds.'
