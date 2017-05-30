@@ -12,4 +12,6 @@
 
 (core/init)
 
+
+;; Do not delete, root-el is used by the figwheel-bridge.js
 (def root-el (core/root-component-factory))

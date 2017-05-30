@@ -8,6 +8,8 @@
 
 (def cnt (r/atom 0))
 (defn reloader [] @cnt [core/app-root])
+
+;; Do not delete, root-el is used by the figwheel-bridge.js
 (def root-el (r/as-element [reloader]))
 
 (defn force-reload! []
