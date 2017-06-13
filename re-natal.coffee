@@ -5,6 +5,7 @@
 # MIT License
 
 fs      = require 'fs-extra'
+klawSync = require 'klaw-sync'
 fpath   = require 'path'
 net     = require 'net'
 http    = require 'http'
@@ -224,7 +225,7 @@ writeConfig = (config) ->
         message
 
 verifyConfig = (config) ->
-  if !config.platforms? || !config.modules? || !config.imageDirs? || !config.interface? || !config.envRoots?
+  if !config.modules? || !config.imageDirs? || !config.interface? || !config.envRoots?
     throw new Error 're-natal project needs to be upgraded, please run: re-natal upgrade'
 
   config
@@ -774,6 +775,31 @@ useComponent = (name, platform) ->
   catch {message}
     logErr message
 
+inferComponents = () ->
+  onlyUserCljs = (item) -> fpath.extname(item.path) == '.cljs' and
+                           item.path.indexOf('/target/') < 0 # ignore target dir
+  jsRequire = /js\/require \"(.+)\"/g
+  files = klawSync process.cwd(),
+    nodir: true
+    filter: onlyUserCljs
+  filenames = files.map((o) -> o.path)
+  contents = filenames.map((path) -> fs.readFileSync(path, encoding: 'utf8'))
+
+  config = readConfig() # re-natal file
+  requires = new Set()
+  contents.forEach((text) ->
+    while match = jsRequire.exec(text)
+      requires.add(match[1]) if match[1].indexOf(config.imageDirs) < 0)
+
+  modules = new Set(config.modules)
+  difference = new Set(Array.from(requires).filter((m) -> !modules.has(m)))
+  if(difference.size isnt 0)
+    log "new component import found #{Array.from(difference)}"
+    config.modules = Array.from(requires)
+    writeConfig(config)
+  else
+    log "no new component was imported, defaulting to #{Array.from(modules)}"
+
 cli._name = 're-natal'
 cli.version pkgJson.version
 
@@ -840,6 +866,11 @@ cli.command 'use-component <name> [<platform>]'
   .description 'configures a custom component to work with figwheel. name is the value you pass to (js/require) function.'
   .action (name, platform) ->
     useComponent(name, platform)
+
+cli.command 'infer-components'
+  .description 'parses all cljs files in this project, extracts all (js/require) components calls and uses them to populate the re-natal file'
+  .action () ->
+    inferComponents()
 
 cli.command 'enable-source-maps'
 .description 'patches RN packager to server *.map files from filesystem, so that chrome can download them.'
