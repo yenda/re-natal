@@ -216,8 +216,9 @@ generateConfig = (interfaceName, projName) ->
 
 writeConfig = (config) ->
   try
-    fs.writeFileSync '.re-natal', JSON.stringify config, null, 2
+    fs.writeFileSync './.re-natal', JSON.stringify config, null, 2
   catch {message}
+    logErr message
     logErr \
       if message.match /EACCES/i
         'Invalid write permissions for creating .re-natal config file'
@@ -225,7 +226,7 @@ writeConfig = (config) ->
         message
 
 verifyConfig = (config) ->
-  if !config.modules? || !config.imageDirs? || !config.interface? || !config.envRoots?
+  if !config.platforms? || !config.modules? || !config.imageDirs? || !config.interface? || !config.envRoots?
     throw new Error 're-natal project needs to be upgraded, please run: re-natal upgrade'
 
   config
