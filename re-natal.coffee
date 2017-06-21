@@ -113,7 +113,7 @@ exec = (cmd, keepOutput) ->
   if keepOutput
     child.execSync cmd, stdio: 'inherit'
   else
-    child.execSync cmd, stdio: 'ignore'
+    child.execSync cmd, stdio: ['pipe', 'pipe', 'ignore']
 
 ensureExecutableAvailable = (executable) ->
   if os.platform() == 'win32'
@@ -298,7 +298,7 @@ resolveIosDevHost = (deviceType) ->
     log "Using 'localhost' for iOS simulator"
     'localhost'
   else if deviceType == 'real'
-    en0Ip = exec('ipconfig getifaddr en0', true).toString().trim()
+    en0Ip = exec('ipconfig getifaddr en0').toString().trim()
     log "Using IP of interface en0:'#{en0Ip}' for real iOS device"
     en0Ip
   else
