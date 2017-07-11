@@ -37,8 +37,8 @@ ipAddressRx     = /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/i
 figwheelUrlRx   = /ws:\/\/[0-9a-zA-Z\.]*:/g
 appDelegateRx   = /http:\/\/[^:]+/g
 debugHostRx     = /host\s+=\s+@".*";/g
-rnVersion       = '0.44.2'
-rnWinVersion    = '0.42.0'
+rnVersion       = '0.46.1'
+rnWinVersion    = '0.46.0-rc.0'
 rnPackagerPort  = 8081
 process.title   = 're-natal'
 interfaceConf   =
@@ -363,7 +363,7 @@ updateGitIgnore = () ->
 patchReactNativePackager = () ->
   installDeps()
   log "Patching react-native packager to serve *.map files"
-  edit "node_modules/react-native/packager/src/Server/index.js",
+  edit "node_modules/metro-bundler/build/Server/index.js",
     [[/match.*\.map\$\/\)/m, "match(/index\\..*\\.map$/)"]]
 
 shimCljsNamespace = (ns) ->
@@ -494,7 +494,7 @@ init = (interfaceName, projName) ->
       version: '0.0.1'
       private: true
       scripts:
-        start: 'node_modules/react-native/packager/packager.sh'
+        start: 'node node_modules/react-native/local-cli/cli.js start'
       dependencies:
         'react-native': rnVersion
         # Fixes issue with packager 'TimeoutError: transforming ... took longer than 301 seconds.'
