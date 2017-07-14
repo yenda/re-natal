@@ -57,9 +57,9 @@ interfaceConf   =
     sources:
       common:  ["events.cljs", "subs.cljs", "db.cljs"]
       other:   [["reagent_dom.cljs","reagent/dom.cljs"], ["reagent_dom_server.cljs","reagent/dom/server.cljs"]]
-    deps:      ['[reagent "0.6.1" :exclusions [cljsjs/react cljsjs/react-dom cljsjs/react-dom-server]]'
+    deps:      ['[reagent "0.7.0" :exclusions [cljsjs/react cljsjs/react-dom cljsjs/react-dom-server cljsjs/create-react-class]]'
                 '[re-frame "0.9.2"]']
-    shims:     ["cljsjs.react", "cljsjs.react.dom", "cljsjs.react.dom.server"]
+    shims:     ["cljsjs.react", "cljsjs.react.dom", "cljsjs.react.dom.server", "cljsjs.create-react-class"]
     sampleCommandNs: '(in-ns \'$PROJECT_NAME_HYPHENATED$.ios.core)'
     sampleCommand: '(dispatch [:set-greeting "Hello Native World!"])'
   'om-next':
@@ -368,6 +368,7 @@ patchReactNativePackager = () ->
 
 shimCljsNamespace = (ns) ->
   filePath = "src/" + ns.replace(/\./g, "/") + ".cljs"
+  filePath = filePath.replace(/-/g, "_")
   fs.mkdirpSync fpath.dirname(filePath)
   fs.writeFileSync(filePath, "(ns #{ns})")
 
@@ -637,7 +638,7 @@ openXcode = (name) ->
         message
 
 generateRequireModulesCode = (modules) ->
-  jsCode = "var modules={'react-native': require('react-native'), 'react': require('react')};"
+  jsCode = "var modules={'react-native': require('react-native'), 'react': require('react'), 'create-react-class': require('create-react-class')};"
   for m in modules
     jsCode += "modules['#{m}']=require('#{m}');";
   jsCode += '\n'

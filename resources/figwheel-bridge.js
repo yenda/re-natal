@@ -14,6 +14,7 @@ var config = {
 };
 
 var React = require('react');
+var createReactClass = require('create-react-class');
 var ReactNative = require('react-native');
 var WebSocket = require('WebSocket');
 var self;
@@ -35,7 +36,7 @@ var evalListeners = [ // Functions to be called after each js file is loaded and
     }];
 
 var figwheelApp = function (platform, devHost) {
-    return React.createClass({
+    return createReactClass({
         getInitialState: function () {
             return {loaded: false}
         },
