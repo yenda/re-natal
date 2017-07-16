@@ -19,7 +19,7 @@ For more ClojureScript React Native resources visit [cljsrn.org](http://cljsrn.o
 Contributions are very welcome.
 
 ## Status
-- Uses [React Native] v0.46.1
+- Uses [React Native] v0.46.3
 - Reusable codebase between iOS and Android
 - Figwheel used for REPL and live coding
   - Works in iOS (real device and simulator)
@@ -298,6 +298,13 @@ Do this with command:
 $ lein prod-build
 ```
 Follow the [React Native documentation](https://facebook.github.io/react-native/docs/signed-apk-android.html) to proceed with the release.
+
+#### Advanced CLJS compilation
+```
+$ lein advanced-build
+```
+The ReactNative externs are provided by [react-native-externs](https://github.com/mfikes/react-native-externs)
+Other library externs needs to be added manually to advanced profile in project.clj  
 
 ## Static Images
 Since version 0.14 React Native supports a [unified way of referencing static images](https://facebook.github.io/react-native/docs/images.html)
