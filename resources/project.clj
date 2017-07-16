@@ -11,7 +11,10 @@
             :clean-targets ["target/" #_($PLATFORM_CLEAN$)]
             :aliases {"prod-build" ^{:doc "Recompile code with prod profile."}
                                    ["do" "clean"
-                                    ["with-profile" "prod" "cljsbuild" "once"]]}
+                                    ["with-profile" "prod" "cljsbuild" "once"]]
+                      "advanced-build" ^{:doc "Recompile code for production using :advanced compilation."}
+                                   ["do" "clean"
+                                    ["with-profile" "advanced" "cljsbuild" "once"]]}
             :profiles {:dev {:dependencies [[figwheel-sidecar "0.5.10"]
                                             [com.cemerick/piggieback "0.2.1"]]
                              :source-paths ["src" "env/dev"]
@@ -19,6 +22,9 @@
 #_($DEV_PROFILES$)]}
                              :repl-options {:nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}}
                        :prod {:cljsbuild {:builds [
-#_($PROD_PROFILES$)]}}})
+#_($PROD_PROFILES$)]}}
+                       :advanced {:dependencies [[react-native-externs "0.0.3"]]
+                                  :cljsbuild {:builds [
+#_($ADVANCED_PROFILES$)]}}})
                                                   
                       

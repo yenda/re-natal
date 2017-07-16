@@ -30,6 +30,8 @@ devProfilesRx   = /#_\(\$DEV_PROFILES\$\)/g
 devProfilesId   = "#_($DEV_PROFILES$)"
 prodProfilesRx  = /#_\(\$PROD_PROFILES\$\)/g
 prodProfilesId  = "#_($PROD_PROFILES$)"
+advProfilesRx   = /#_\(\$ADVANCED_PROFILES\$\)/g
+advProfilesId   = "#_($ADVANCED_PROFILES$)"
 platformCleanRx = /#_\(\$PLATFORM_CLEAN\$\)/g
 platformCleanId = "#_($PLATFORM_CLEAN$)"
 devHostRx       = /\$DEV_HOST\$/g
@@ -418,7 +420,17 @@ copyProjectClj = (interfaceName, projNameHyph) ->
   prodProfiles = platforms.map (platform) -> prodProfileTemplate.replace(platformRx, platform)
   prodProfiles.push prodProfilesId
 
-  edit 'project.clj', [[projNameHyphRx, projNameHyph], [interfaceDepsRx, deps], [platformCleanRx, cleans.join(' ')], [devProfilesRx, devProfiles.join("\n")], [prodProfilesRx, prodProfiles.join("\n")]]
+  advProfileTemplate = readFile "#{resources}/advanced.profile"
+  advProfiles = platforms.map (platform) -> advProfileTemplate.replace(platformRx, platform)
+  advProfiles.push advProfilesId
+
+  edit 'project.clj', [
+    [projNameHyphRx, projNameHyph],
+    [interfaceDepsRx, deps],
+    [platformCleanRx, cleans.join(' ')],
+    [devProfilesRx, devProfiles.join("\n")],
+    [prodProfilesRx, prodProfiles.join("\n")],
+    [advProfilesRx, advProfiles.join("\n")]]
 
 updateProjectClj = (platform) ->
   proj = readFile('project.clj')
@@ -449,7 +461,22 @@ updateProjectClj = (platform) ->
     log "Manual update of project.clj required: add new build to prod profile:"
     log "#{prodProfiles.join('\n')}", "red"
 
-  edit 'project.clj', [[platformCleanRx, cleans.join(' ')], [devProfilesRx, devProfiles.join("\n")], [prodProfilesRx, prodProfiles.join("\n")]]
+  advProfileTemplate = readFile "#{resources}/advanced.profile"
+  advProfiles = []
+  advProfiles.push advProfileTemplate.replace(platformRx, platform)
+  advProfiles.push advProfilesId
+
+  if !proj.match(advProfilesRx)
+    log "Manual update of project.clj required: add new build to advanced profile:"
+    log "#{advProfiles.join('\n')}", "red"
+
+
+  edit 'project.clj', [
+    [platformCleanRx, cleans.join(' ')],
+    [devProfilesRx, devProfiles.join("\n")],
+    [prodProfilesRx, prodProfiles.join("\n")],
+    [advProfilesRx, advProfiles.join("\n")]
+  ]
 
 init = (interfaceName, projName) ->
   if projName.toLowerCase() is 'react' or !projName.match validNameRx
