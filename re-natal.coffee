@@ -26,12 +26,6 @@ projNameHyphRx  = /\$PROJECT_NAME_HYPHENATED\$/g
 projNameUsRx    = /\$PROJECT_NAME_UNDERSCORED\$/g
 interfaceDepsRx = /\$INTERFACE_DEPS\$/g
 platformRx      = /\$PLATFORM\$/g
-devProfilesRx   = /#_\(\$DEV_PROFILES\$\)/g
-devProfilesId   = "#_($DEV_PROFILES$)"
-prodProfilesRx  = /#_\(\$PROD_PROFILES\$\)/g
-prodProfilesId  = "#_($PROD_PROFILES$)"
-advProfilesRx   = /#_\(\$ADVANCED_PROFILES\$\)/g
-advProfilesId   = "#_($ADVANCED_PROFILES$)"
 platformCleanRx = /#_\(\$PLATFORM_CLEAN\$\)/g
 platformCleanId = "#_($PLATFORM_CLEAN$)"
 devHostRx       = /\$DEV_HOST\$/g
@@ -43,6 +37,16 @@ rnVersion       = '0.46.3'
 rnWinVersion    = '0.46.0-rc.0'
 rnPackagerPort  = 8081
 process.title   = 're-natal'
+buildProfiles     =
+  dev:
+    profilesRx: /#_\(\$DEV_PROFILES\$\)/g
+    profilesId: "#_($DEV_PROFILES$)"
+  prod:
+    profilesRx: /#_\(\$PROD_PROFILES\$\)/g
+    profilesId: "#_($PROD_PROFILES$)"
+  advanced:
+    profilesRx: /#_\(\$ADVANCED_PROFILES\$\)/g
+    profilesId: "#_($ADVANCED_PROFILES$)"
 interfaceConf   =
   'reagent':
     cljsDir: "cljs-reagent"
@@ -405,6 +409,15 @@ copySrcFiles = (interfaceName, projName, projNameUs, projNameHyph) ->
   for namespace in shims
     shimCljsNamespace(namespace)
 
+creteBuildConfigs = (profiles, platforms) ->
+  builds = {}
+  for profile in profiles
+    template = readFile "#{resources}/#{profile}.profile"
+    configs = platforms.map (platform) -> template.replace(platformRx, platform)
+    configs.push buildProfiles[profile].profilesId
+    builds[profile] = configs.join("\n")
+  builds
+
 copyProjectClj = (interfaceName, projNameHyph) ->
   fs.copySync("#{resources}/project.clj", "project.clj")
   deps = interfaceConf[interfaceName].deps.join("\n")
@@ -412,25 +425,15 @@ copyProjectClj = (interfaceName, projNameHyph) ->
   cleans = platforms.map (platform) -> "\"index.#{platform}.js\""
   cleans.push platformCleanId
 
-  devProfileTemplate = readFile "#{resources}/dev.profile"
-  devProfiles = platforms.map (platform) -> devProfileTemplate.replace(platformRx, platform)
-  devProfiles.push devProfilesId
-
-  prodProfileTemplate = readFile "#{resources}/prod.profile"
-  prodProfiles = platforms.map (platform) -> prodProfileTemplate.replace(platformRx, platform)
-  prodProfiles.push prodProfilesId
-
-  advProfileTemplate = readFile "#{resources}/advanced.profile"
-  advProfiles = platforms.map (platform) -> advProfileTemplate.replace(platformRx, platform)
-  advProfiles.push advProfilesId
+  builds = creteBuildConfigs ['dev', 'prod', 'advanced'], platforms
 
   edit 'project.clj', [
     [projNameHyphRx, projNameHyph],
     [interfaceDepsRx, deps],
     [platformCleanRx, cleans.join(' ')],
-    [devProfilesRx, devProfiles.join("\n")],
-    [prodProfilesRx, prodProfiles.join("\n")],
-    [advProfilesRx, advProfiles.join("\n")]]
+    [buildProfiles.dev.profilesRx, builds.dev],
+    [buildProfiles.prod.profilesRx, builds.prod],
+    [buildProfiles.advanced.profilesRx, builds.advanced]]
 
 updateProjectClj = (platform) ->
   proj = readFile('project.clj')
@@ -443,39 +446,19 @@ updateProjectClj = (platform) ->
     log "Manual update of project.clj required: add clean targets:"
     log "#{cleans.join(' ')}", "red"
 
-  devProfileTemplate = readFile "#{resources}/dev.profile"
-  devProfiles = []
-  devProfiles.push devProfileTemplate.replace(platformRx, platform)
-  devProfiles.push devProfilesId
+  builds = creteBuildConfigs ['dev', 'prod', 'advanced'], [platform]
 
-  if !proj.match(devProfilesRx)
-    log "Manual update of project.clj required: add new build to dev profile:"
-    log "#{devProfiles.join('\n')}", "red"
-
-  prodProfileTemplate = readFile "#{resources}/prod.profile"
-  prodProfiles = []
-  prodProfiles.push prodProfileTemplate.replace(platformRx, platform)
-  prodProfiles.push prodProfilesId
-
-  if !proj.match(prodProfilesRx)
-    log "Manual update of project.clj required: add new build to prod profile:"
-    log "#{prodProfiles.join('\n')}", "red"
-
-  advProfileTemplate = readFile "#{resources}/advanced.profile"
-  advProfiles = []
-  advProfiles.push advProfileTemplate.replace(platformRx, platform)
-  advProfiles.push advProfilesId
-
-  if !proj.match(advProfilesRx)
-    log "Manual update of project.clj required: add new build to advanced profile:"
-    log "#{advProfiles.join('\n')}", "red"
-
+  profileKeys = Object.keys buildProfiles
+  for key in profileKeys
+    if !proj.match(buildProfiles[key].profilesRx)
+      log "Manual update of project.clj required: add new build to #{key} profile:"
+      log "#{builds[key]}", "red"
 
   edit 'project.clj', [
     [platformCleanRx, cleans.join(' ')],
-    [devProfilesRx, devProfiles.join("\n")],
-    [prodProfilesRx, prodProfiles.join("\n")],
-    [advProfilesRx, advProfiles.join("\n")]
+    [buildProfiles.dev.profilesRx, builds.dev],
+    [buildProfiles.prod.profilesRx, builds.prod],
+    [buildProfiles.advanced.profilesRx, builds.advanced]
   ]
 
 init = (interfaceName, projName) ->
