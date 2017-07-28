@@ -368,9 +368,10 @@ updateGitIgnore = () ->
 
 patchReactNativePackager = () ->
   installDeps()
-  log "Patching react-native packager to serve *.map files"
+  log "Patching the React Native packager to serve *.map files."
   edit "node_modules/metro-bundler/build/Server/index.js",
     [[/match.*\.map\$\/\)/m, "match(/index\\..*\\.map$/)"]]
+  log "If the React Native packager is running, please restart it."
 
 shimCljsNamespace = (ns) ->
   filePath = "src/" + ns.replace(/\./g, "/") + ".cljs"
