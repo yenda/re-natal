@@ -19,7 +19,7 @@ For more ClojureScript React Native resources visit [cljsrn.org](http://cljsrn.o
 Contributions are very welcome.
 
 ## Status
-- Uses [React Native] v0.46.3
+- Uses [React Native] v0.47.1
 - Reusable codebase between iOS and Android
 - Figwheel used for REPL and live coding
   - Works in iOS (real device and simulator)
@@ -33,6 +33,11 @@ Contributions are very welcome.
 [Reagent], [Om.Next], and [Rum]
 - Support of windows (UWP and WPF) apps
 - [Unified way of using static images of React Native 0.14+](https://facebook.github.io/react-native/docs/images.html) supported
+
+## Compatibility with RN versions
+Current version of re-natal might not work correctly with older versions of React Native  
+- use current version of re-natal with React Native >= v0.46
+- use re-natal < v0.5.0 with React Native < v0.46
 
 ## Dependencies
 As Re-Natal is an orchestration of many individual tools, there are quite a few dependencies.
