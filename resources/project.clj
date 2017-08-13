@@ -23,7 +23,7 @@
                              :repl-options {:nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}}
                        :prod {:cljsbuild {:builds [
 #_($PROD_PROFILES$)]}}
-                       :advanced {:dependencies [[react-native-externs "0.0.3"]]
+                       :advanced {:dependencies [[react-native-externs "0.1.0"]]
                                   :cljsbuild {:builds [
 #_($ADVANCED_PROFILES$)]}}})
                                                   
