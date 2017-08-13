@@ -33,8 +33,8 @@ ipAddressRx     = /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/i
 figwheelUrlRx   = /ws:\/\/[0-9a-zA-Z\.]*:/g
 appDelegateRx   = /http:\/\/[^:]+/g
 debugHostRx     = /host\s+=\s+@".*";/g
-rnVersion       = '0.46.3'
-rnWinVersion    = '0.46.0-rc.0'
+rnVersion       = '0.47.1'
+rnWinVersion    = '0.47.0-rc.5'
 rnPackagerPort  = 8081
 process.title   = 're-natal'
 buildProfiles     =
@@ -366,10 +366,22 @@ updateGitIgnore = () ->
 
   fs.appendFileSync(".gitignore", "\n# Figwheel\n#\nfigwheel_server.log")
 
+findPackagerFileToPatch = () ->
+  files = [
+    "node_modules/metro-bundler/src/Server/index.js",
+    "node_modules/metro-bundler/build/Server/index.js",
+    "node_modules/react-native/packager/src/Server/index.js"]
+  fileToPatch = files[0];
+  for f in files
+    if fs.existsSync(f)
+      fileToPatch = f
+  fileToPatch
+
 patchReactNativePackager = () ->
   installDeps()
-  log "Patching the React Native packager to serve *.map files."
-  edit "node_modules/metro-bundler/build/Server/index.js",
+  fileToPatch = findPackagerFileToPatch()
+  log "Patching file #{fileToPatch} to serve *.map files."
+  edit fileToPatch,
     [[/match.*\.map\$\/\)/m, "match(/index\\..*\\.map$/)"]]
   log "If the React Native packager is running, please restart it."
 
