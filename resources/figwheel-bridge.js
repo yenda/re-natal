@@ -20,11 +20,11 @@ var WebSocket = require('WebSocket');
 var self;
 var evaluate = eval; // This is needed, direct calls to eval does not work (RN packager???)
 var externalModules = {};
-var evalListeners = [];
+var evalListeners = {};
 var asyncImportChain = new Promise(function (succ,fail) {succ(true);});
 
 function fireEvalListenters(url) {
-    evalListeners.forEach(function (listener) {
+    Object.values(evalListeners).forEach(function (listener) {
         listener(url)
     });
 }
@@ -191,14 +191,14 @@ function loadApp(platform, devHost, onLoadCb) {
 
     // callback when app is ready to get the reloadable component
     var mainJs = '/figwheel/connect/build_' + platform + '.js';
-    evalListeners.push(function (url) {
+    evalListeners.waitForFinalEval = function (url) {
         if (url.indexOf(mainJs) > -1) {
 	    assertRootElExists(platform);
             onLoadCb(env[platform].main.root_el);
             console.info('Done loading Clojure app');
-	    // TODO remove listener
+	    delete evalListeners.waitForFinalEval;
         }
-    });
+    };
 
     if (typeof goog === "undefined") {
         console.info('Loading Closure base.');
