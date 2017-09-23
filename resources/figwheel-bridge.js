@@ -187,16 +187,16 @@ function assertRootElExists(platform) {
  }
 
 function loadApp(platform, devHost, onLoadCb) {
-    // serverHost = devHost;
     var fileBasePath = serverBaseUrl((isChrome() ? "localhost" : devHost)) + "/" + config.basePath + platform;
 
     // callback when app is ready to get the reloadable component
-    var mainJs = '/env/' + platform + '/main.js';
+    var mainJs = '/figwheel/connect/build_' + platform + '.js';
     evalListeners.push(function (url) {
         if (url.indexOf(mainJs) > -1) {
 	    assertRootElExists(platform);
             onLoadCb(env[platform].main.root_el);
             console.info('Done loading Clojure app');
+	    // TODO remove listener
         }
     });
 
