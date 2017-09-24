@@ -2,6 +2,9 @@
   (:require [$PROJECT_NAME_HYPHENATED$.$PLATFORM$.core :as core]
             [figwheel.client :as figwheel :include-macros true]))
 
+(assert (exists? core/init) "Fatal Error - Your core.cljs file doesn't define an 'init' function!!! - Perhaps there was a compilation failure?")
+(assert (exists? core/app-root) "Fatal Error - Your core.cljs file doesn't define an 'app-root' function!!! - Perhaps there was a compilation failure?")
+
 (enable-console-print!)
 
 (figwheel/watch-and-reload

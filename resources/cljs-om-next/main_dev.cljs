@@ -6,6 +6,9 @@
 
 (enable-console-print!)
 
+(assert (exists? core/init) "Fatal Error - Your core.cljs file doesn't define an 'init' function!!! - Perhaps there was a compilation failure?")
+(assert (exists? core/app-root) "Fatal Error - Your core.cljs file doesn't define an 'app-root' function!!! - Perhaps there was a compilation failure?")
+
 (figwheel/watch-and-reload
   :websocket-url "ws://localhost:3449/figwheel-ws"
   :heads-up-display false
