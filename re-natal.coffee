@@ -682,13 +682,52 @@ updateIosRCTWebSocketExecutor = (iosHost) ->
   RCTWebSocketExecutorPath = "node_modules/react-native/Libraries/WebSocket/RCTWebSocketExecutor.m"
   edit RCTWebSocketExecutorPath, [[debugHostRx, "host] ?: @\"#{iosHost}\";"]]
 
+platformOfNamespace = (ns) ->
+  if ns?
+    possiblePlatforms = Object.keys platformMeta
+    p = possiblePlatforms.find((p) -> ns.indexOf(".#{p}") > 0);
+  p ?= "common"
+
+extractRequiresFromSourceFile = (file) ->
+  content = fs.readFileSync(file, encoding: 'utf8')
+  requires = []
+  while match = namespaceRx.exec(content)
+    ns = match[1]
+  while match = jsRequireRx.exec(content)
+    requires.push(match[1])
+
+  platform: platformOfNamespace(ns)
+  requires: requires
+
+buildRequireByPlatformMap = () ->
+  onlyUserCljs = (item) -> fpath.extname(item.path) == '.cljs' and
+    item.path.indexOf('/target/') < 0 # ignore target dir
+  files = klawSync process.cwd(),
+    nodir: true
+    filter: onlyUserCljs
+  filenames = files.map((o) -> o.path)
+  extractedRequires = filenames.map(extractRequiresFromSourceFile)
+
+  extractedRequires.reduce((result, item) ->
+    platform = item.platform
+    if result[platform]?
+      result[platform] = Array.from(new Set(item.requires.concat(result[platform])))
+    else
+      result[platform] = Array.from(new Set(item.requires))
+    result
+  , {})
+
 platformModulesAndImages = (config, platform) ->
-  images = scanImages(config.imageDirs).map (fname) -> './' + fname;
-  modulesAndImages = config.modules.concat images;
-  if typeof config.platforms[platform].modules is 'undefined'
-    modulesAndImages
+  if config.autoRequire? and config.autoRequire
+    requires = buildRequireByPlatformMap()
+    requires.common.concat(requires[platform])
   else
-    modulesAndImages.concat(config.platforms[platform].modules)
+    images = scanImages(config.imageDirs).map (fname) -> './' + fname;
+    modulesAndImages = config.modules.concat images;
+    if typeof config.platforms[platform].modules is 'undefined'
+      modulesAndImages
+    else
+      modulesAndImages.concat(config.platforms[platform].modules)
 
 generateDevScripts = () ->
   try
@@ -706,6 +745,9 @@ generateDevScripts = () ->
     devHost = {}
     for platform in platforms
       devHost[platform] = config.platforms[platform].host
+
+    if config.autoRequire? and config.autoRequire
+      log 'Auto-require is enabled. Scanning for require() calls in *.cljs files...'
 
     for platform in platforms
       moduleMap = generateRequireModulesCode(platformModulesAndImages(config, platform))
@@ -801,41 +843,6 @@ useComponent = (name, platform) ->
     writeConfig(config)
   catch {message}
     logErr message
-
-platformOfNamespace = (ns) ->
-  if ns?
-    platforms = Object.keys platformMeta
-    platform = platforms.find((p) -> ns.indexOf(".#{p}") > 0);
-  platform ?= "common"
-
-extractRequiresFromSourceFile = (file) ->
-  content = fs.readFileSync(file, encoding: 'utf8')
-  requires = []
-  while match = namespaceRx.exec(content)
-    ns = match[1]
-  while match = jsRequireRx.exec(content)
-    requires.push(match[1])
-
-  platform: platformOfNamespace(ns)
-  requires: requires
-
-buildRequireByPlatformMap = () ->
-  onlyUserCljs = (item) -> fpath.extname(item.path) == '.cljs' and
-    item.path.indexOf('/target/') < 0 # ignore target dir
-  files = klawSync process.cwd(),
-    nodir: true
-    filter: onlyUserCljs
-  filenames = files.map((o) -> o.path)
-  extractedRequires = filenames.map(extractRequiresFromSourceFile)
-
-  extractedRequires.reduce((result, item) ->
-    platform = item.platform
-    if result[platform]?
-      result[platform] = Array.from(new Set(item.requires.concat(result[platform])))
-    else
-      result[platform] = Array.from(new Set(item.requires))
-    result
-  , {})
 
 inferComponents = () ->
   requiresByPlatform = buildRequireByPlatformMap()
