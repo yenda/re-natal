@@ -45,7 +45,7 @@ If you've previously done React Native or Clojure development, you should hopefu
 have most installed already. Platform dependencies are listed under their respective tools.
 
 - [npm](https://www.npmjs.com) `>=1.4`
-    - [Node.js](https://nodejs.org) `>=4.0.0`
+    - [Node.js](https://nodejs.org) `>=7.1.0`
 - [react-native-cli](https://www.npmjs.com/package/react-native-cli) `>=0.1.7` (install with `npm install -g react-native-cli`)
 - [watchman](https://facebook.github.io/watchman/) `>=4.9.0`
 - [Leiningen](http://leiningen.org) `>=2.5.3`
