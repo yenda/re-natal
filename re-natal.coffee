@@ -33,6 +33,8 @@ ipAddressRx     = /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/i
 figwheelUrlRx   = /ws:\/\/[0-9a-zA-Z\.]*:/g
 appDelegateRx   = /http:\/\/[^:]+/g
 debugHostRx     = /host]\s+\?:\s+@".*";/g
+namespaceRx     = /\(ns\s+([A-Za-z0-9.-]+)/g
+jsRequireRx     = /js\/require "(.+)"/g
 rnVersion       = '0.47.1'
 rnWinVersion    = '0.47.0-rc.5'
 rnPackagerPort  = 8081
@@ -800,27 +802,54 @@ useComponent = (name, platform) ->
   catch {message}
     logErr message
 
-inferComponents = () ->
+platformOfNamespace = (ns) ->
+  if ns?
+    platforms = Object.keys platformMeta
+    platform = platforms.find((p) -> ns.indexOf(".#{p}") > 0);
+  platform ?= "common"
+
+extractRequiresFromSourceFile = (file) ->
+  content = fs.readFileSync(file, encoding: 'utf8')
+  requires = []
+  while match = namespaceRx.exec(content)
+    ns = match[1]
+  while match = jsRequireRx.exec(content)
+    requires.push(match[1])
+
+  platform: platformOfNamespace(ns)
+  requires: requires
+
+buildRequireByPlatformMap = () ->
   onlyUserCljs = (item) -> fpath.extname(item.path) == '.cljs' and
-                           item.path.indexOf('/target/') < 0 # ignore target dir
-  jsRequire = /js\/require \"(.+)\"/g
+    item.path.indexOf('/target/') < 0 # ignore target dir
   files = klawSync process.cwd(),
     nodir: true
     filter: onlyUserCljs
   filenames = files.map((o) -> o.path)
-  contents = filenames.map((path) -> fs.readFileSync(path, encoding: 'utf8'))
+  extractedRequires = filenames.map(extractRequiresFromSourceFile)
+
+  extractedRequires.reduce((result, item) ->
+    platform = item.platform
+    if result[platform]?
+      result[platform] = Array.from(new Set(item.requires.concat(result[platform])))
+    else
+      result[platform] = Array.from(new Set(item.requires))
+    result
+  , {})
+
+inferComponents = () ->
+  requiresByPlatform = buildRequireByPlatformMap()
+
+  allRequires = []
+  for k,v of requiresByPlatform
+    allRequires = Array.from(new Set(allRequires.concat(v)))
 
   config = readConfig() # re-natal file
-  requires = new Set()
-  contents.forEach((text) ->
-    while match = jsRequire.exec(text)
-      requires.add(match[1]) if match[1].indexOf(config.imageDirs) < 0)
-
   modules = new Set(config.modules)
-  difference = new Set(Array.from(requires).filter((m) -> !modules.has(m)))
+  difference = new Set(Array.from(allRequires).filter((m) -> !modules.has(m)))
   if(difference.size isnt 0)
     log "new component import found #{Array.from(difference)}"
-    config.modules = Array.from(requires)
+    config.modules = Array.from(allRequires)
     writeConfig(config)
   else
     log "no new component was imported, defaulting to #{Array.from(modules)}"
