@@ -948,12 +948,12 @@ cli.command 'enable-source-maps'
   patchReactNativePackager()
 
 cli.command 'enable-auto-require'
-  .description 'Enables scanning for requires in cljs files and automatically add them in use-figwheel'
+  .description 'enables source scanning for automatic required module resolution in use-figwheel command.'
   .action () ->
     autoRequire(true)
 
 cli.command 'disable-auto-require'
-  .description 'Disables auto-require feature in use-figwheel command'
+  .description 'disables auto-require feature in use-figwheel command'
   .action () ->
     autoRequire(false)
 
