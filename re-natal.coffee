@@ -32,7 +32,7 @@ devHostRx       = /\$DEV_HOST\$/g
 ipAddressRx     = /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/i
 figwheelUrlRx   = /ws:\/\/[0-9a-zA-Z\.]*:/g
 appDelegateRx   = /http:\/\/[^:]+/g
-debugHostRx     = /host\s+=\s+@".*";/g
+debugHostRx     = /host]\s+\?:\s+@".*";/g
 rnVersion       = '0.47.1'
 rnWinVersion    = '0.47.0-rc.5'
 rnPackagerPort  = 8081
@@ -678,7 +678,7 @@ updateIosAppDelegate = (projName, iosHost) ->
 
 updateIosRCTWebSocketExecutor = (iosHost) ->
   RCTWebSocketExecutorPath = "node_modules/react-native/Libraries/WebSocket/RCTWebSocketExecutor.m"
-  edit RCTWebSocketExecutorPath, [[debugHostRx, "host = @\"#{iosHost}\";"]]
+  edit RCTWebSocketExecutorPath, [[debugHostRx, "host] ?: @\"#{iosHost}\";"]]
 
 platformModulesAndImages = (config, platform) ->
   images = scanImages(config.imageDirs).map (fname) -> './' + fname;
