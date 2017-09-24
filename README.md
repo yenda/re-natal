@@ -47,6 +47,7 @@ have most installed already. Platform dependencies are listed under their respec
 - [npm](https://www.npmjs.com) `>=1.4`
     - [Node.js](https://nodejs.org) `>=4.0.0`
 - [react-native-cli](https://www.npmjs.com/package/react-native-cli) `>=0.1.7` (install with `npm install -g react-native-cli`)
+- [watchman](https://facebook.github.io/watchman/) `>=4.9.0`
 - [Leiningen](http://leiningen.org) `>=2.5.3`
     - [Java 8](http://www.oracle.com/technetwork/java/javase/downloads/index.html)
       
