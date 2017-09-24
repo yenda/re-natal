@@ -854,6 +854,15 @@ inferComponents = () ->
   else
     log "no new component was imported, defaulting to #{Array.from(modules)}"
 
+autoRequire = (enabled) ->
+  config = readConfig()
+  config.autoRequire = enabled
+  writeConfig(config)
+  if (enabled)
+    log "Auto-Require feature is enabled in use-figwheel command"
+  else
+    log "Auto-Require feature is disabled in use-figwheel command"
+
 cli._name = 're-natal'
 cli.version pkgJson.version
 
@@ -930,6 +939,16 @@ cli.command 'enable-source-maps'
 .description 'patches RN packager to server *.map files from filesystem, so that chrome can download them.'
 .action () ->
   patchReactNativePackager()
+
+cli.command 'enable-auto-require'
+  .description 'Enables scanning for requires in cljs files and automatically add them in use-figwheel'
+  .action () ->
+    autoRequire(true)
+
+cli.command 'disable-auto-require'
+  .description 'Disables auto-require feature in use-figwheel command'
+  .action () ->
+    autoRequire(false)
 
 cli.command 'copy-figwheel-bridge'
   .description 'copy figwheel-bridge.js into project'
