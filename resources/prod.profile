@@ -6,4 +6,7 @@
                                                                    :static-fns    true
                                                                    :optimize-constants true
                                                                    :optimizations :simple
+                                                                   :npm-deps {:react "16.0.0-alpha.12"
+                                                                              :create-react-class "15.6.0"}
+                                                                   :install-deps true
                                                                    :closure-defines {"goog.DEBUG" false}}}

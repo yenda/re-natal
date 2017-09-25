@@ -65,9 +65,9 @@ interfaceConf   =
     sources:
       common:  ["events.cljs", "subs.cljs", "db.cljs"]
       other:   [["reagent_dom.cljs","reagent/dom.cljs"], ["reagent_dom_server.cljs","reagent/dom/server.cljs"]]
-    deps:      ['[reagent "0.7.0" :exclusions [cljsjs/react cljsjs/react-dom cljsjs/react-dom-server cljsjs/create-react-class]]'
+    deps:      ['[reagent "0.8.0-alpha1" :exclusions [cljsjs/react cljsjs/react-dom cljsjs/react-dom-server cljsjs/create-react-class]]'
                 '[re-frame "0.9.2"]']
-    shims:     ["cljsjs.react", "cljsjs.react.dom", "cljsjs.react.dom.server", "cljsjs.create-react-class"]
+    shims:     []
     sampleCommandNs: '(in-ns \'$PROJECT_NAME_HYPHENATED$.ios.core)'
     sampleCommand: '(dispatch [:set-greeting "Hello Native World!"])'
   'om-next':
@@ -133,10 +133,6 @@ ensureExecutableAvailable = (executable) ->
     exec "type #{executable}"
 
 isYarnAvailable = () ->
-  try
-    ensureExecutableAvailable('yarn')
-    true
-  catch e
     false
 
 isSomeDepsMissing = () ->
