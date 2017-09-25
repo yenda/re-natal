@@ -212,6 +212,7 @@ generateConfig = (interfaceName, projName) ->
     modules: []
     imageDirs: ["images"]
     platforms: {}
+    autoRequire: true
 
   for platform in platforms
     config.platforms[platform] =
