@@ -224,12 +224,28 @@ And you want to use a component called 'some-library/Component':
 ```clojure
 (def Component (js/require "some-library/Component"))
 ```
-This would work when you do `lein prod-build` and run your app, but will fail when you run with Figwheel.
+This works fine when you do `lein prod-build` and run your app. 
+
 The React Native packager statically scans for all calls to `require` and prepares the required
 code to be available at runtime. But, dynamically loaded (by Figwheel) code bypasses this scan
 and therefore requiring the custom component fails.
 
-To overcome this run `use-component`:
+In re-natal this is solved by adding all dependencies in index.*.js file which is scanned by React Native packager.
+
+#### Using auto-require
+
+To enable auto-require feature you have to run command:
+```
+$ re-natal enable-auto-require
+```
+From now on, command `use-figwheel` will scan for all required modules and generate index.*.js with all required dependencies.
+You will have to re-run `use-figwheel` command every time you use new modules via `(js/require "...")` 
+
+This feature is available since re-natal@0.7.0
+
+#### Manually registering dependencies with use-component command
+
+You can register a single dependency manually by running `use-component` command:
 ```
 $ re-natal use-component some-library/Component
 ```
