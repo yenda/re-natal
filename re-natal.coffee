@@ -33,6 +33,8 @@ ipAddressRx     = /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/i
 figwheelUrlRx   = /ws:\/\/[0-9a-zA-Z\.]*:/g
 appDelegateRx   = /http:\/\/[^:]+/g
 debugHostRx     = /host]\s+\?:\s+@".*";/g
+namespaceRx     = /\(ns\s+([A-Za-z0-9.-]+)/g
+jsRequireRx     = /js\/require "(.+)"/g
 rnVersion       = '0.47.1'
 rnWinVersion    = '0.47.0-rc.5'
 rnPackagerPort  = 8081
@@ -210,6 +212,7 @@ generateConfig = (interfaceName, projName) ->
     modules: []
     imageDirs: ["images"]
     platforms: {}
+    autoRequire: true
 
   for platform in platforms
     config.platforms[platform] =
@@ -680,13 +683,52 @@ updateIosRCTWebSocketExecutor = (iosHost) ->
   RCTWebSocketExecutorPath = "node_modules/react-native/Libraries/WebSocket/RCTWebSocketExecutor.m"
   edit RCTWebSocketExecutorPath, [[debugHostRx, "host] ?: @\"#{iosHost}\";"]]
 
+platformOfNamespace = (ns) ->
+  if ns?
+    possiblePlatforms = Object.keys platformMeta
+    p = possiblePlatforms.find((p) -> ns.indexOf(".#{p}") > 0);
+  p ?= "common"
+
+extractRequiresFromSourceFile = (file) ->
+  content = fs.readFileSync(file, encoding: 'utf8')
+  requires = []
+  while match = namespaceRx.exec(content)
+    ns = match[1]
+  while match = jsRequireRx.exec(content)
+    requires.push(match[1])
+
+  platform: platformOfNamespace(ns)
+  requires: requires
+
+buildRequireByPlatformMap = () ->
+  onlyUserCljs = (item) -> fpath.extname(item.path) == '.cljs' and
+    item.path.indexOf('/target/') < 0 # ignore target dir
+  files = klawSync process.cwd(),
+    nodir: true
+    filter: onlyUserCljs
+  filenames = files.map((o) -> o.path)
+  extractedRequires = filenames.map(extractRequiresFromSourceFile)
+
+  extractedRequires.reduce((result, item) ->
+    platform = item.platform
+    if result[platform]?
+      result[platform] = Array.from(new Set(item.requires.concat(result[platform])))
+    else
+      result[platform] = Array.from(new Set(item.requires))
+    result
+  , {})
+
 platformModulesAndImages = (config, platform) ->
-  images = scanImages(config.imageDirs).map (fname) -> './' + fname;
-  modulesAndImages = config.modules.concat images;
-  if typeof config.platforms[platform].modules is 'undefined'
-    modulesAndImages
+  if config.autoRequire? and config.autoRequire
+    requires = buildRequireByPlatformMap()
+    requires.common.concat(requires[platform])
   else
-    modulesAndImages.concat(config.platforms[platform].modules)
+    images = scanImages(config.imageDirs).map (fname) -> './' + fname;
+    modulesAndImages = config.modules.concat images;
+    if typeof config.platforms[platform].modules is 'undefined'
+      modulesAndImages
+    else
+      modulesAndImages.concat(config.platforms[platform].modules)
 
 generateDevScripts = () ->
   try
@@ -704,6 +746,9 @@ generateDevScripts = () ->
     devHost = {}
     for platform in platforms
       devHost[platform] = config.platforms[platform].host
+
+    if config.autoRequire? and config.autoRequire
+      log 'Auto-require is enabled. Scanning for require() calls in *.cljs files...'
 
     for platform in platforms
       moduleMap = generateRequireModulesCode(platformModulesAndImages(config, platform))
@@ -801,29 +846,30 @@ useComponent = (name, platform) ->
     logErr message
 
 inferComponents = () ->
-  onlyUserCljs = (item) -> fpath.extname(item.path) == '.cljs' and
-                           item.path.indexOf('/target/') < 0 # ignore target dir
-  jsRequire = /js\/require \"(.+)\"/g
-  files = klawSync process.cwd(),
-    nodir: true
-    filter: onlyUserCljs
-  filenames = files.map((o) -> o.path)
-  contents = filenames.map((path) -> fs.readFileSync(path, encoding: 'utf8'))
+  requiresByPlatform = buildRequireByPlatformMap()
+
+  allRequires = []
+  for k,v of requiresByPlatform
+    allRequires = Array.from(new Set(allRequires.concat(v)))
 
   config = readConfig() # re-natal file
-  requires = new Set()
-  contents.forEach((text) ->
-    while match = jsRequire.exec(text)
-      requires.add(match[1]) if match[1].indexOf(config.imageDirs) < 0)
-
   modules = new Set(config.modules)
-  difference = new Set(Array.from(requires).filter((m) -> !modules.has(m)))
+  difference = new Set(Array.from(allRequires).filter((m) -> !modules.has(m)))
   if(difference.size isnt 0)
     log "new component import found #{Array.from(difference)}"
-    config.modules = Array.from(requires)
+    config.modules = Array.from(allRequires)
     writeConfig(config)
   else
     log "no new component was imported, defaulting to #{Array.from(modules)}"
+
+autoRequire = (enabled) ->
+  config = readConfig()
+  config.autoRequire = enabled
+  writeConfig(config)
+  if (enabled)
+    log "Auto-Require feature is enabled in use-figwheel command"
+  else
+    log "Auto-Require feature is disabled in use-figwheel command"
 
 cli._name = 're-natal'
 cli.version pkgJson.version
@@ -901,6 +947,16 @@ cli.command 'enable-source-maps'
 .description 'patches RN packager to server *.map files from filesystem, so that chrome can download them.'
 .action () ->
   patchReactNativePackager()
+
+cli.command 'enable-auto-require'
+  .description 'enables source scanning for automatic required module resolution in use-figwheel command.'
+  .action () ->
+    autoRequire(true)
+
+cli.command 'disable-auto-require'
+  .description 'disables auto-require feature in use-figwheel command'
+  .action () ->
+    autoRequire(false)
 
 cli.command 'copy-figwheel-bridge'
   .description 'copy figwheel-bridge.js into project'
