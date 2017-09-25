@@ -3,7 +3,8 @@
             [figwheel.client :as figwheel :include-macros true]))
 
 (assert (exists? core/init) "Fatal Error - Your core.cljs file doesn't define an 'init' function!!! - Perhaps there was a compilation failure?")
-(assert (exists? core/app-root) "Fatal Error - Your core.cljs file doesn't define an 'app-root' function!!! - Perhaps there was a compilation failure?")
+(assert (exists? core/root-component-factory) "Fatal Error - Your core.cljs file doesn't define an 'root-component-factory' function!!! - Perhaps there was a compilation failure?")
+(assert (exists? core/mount-app) "Fatal Error - Your core.cljs file doesn't define an 'mount-app' function!!! - Perhaps there was a compilation failure?")
 
 (enable-console-print!)
 
