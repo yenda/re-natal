@@ -6,4 +6,8 @@
                                                                    :static-fns    true
                                                                    :optimize-constants true
                                                                    :optimizations :advanced
+                                                                   :target :nodejs
+                                                                   :npm-deps {:react-native "0.48.4"
+                                                                              :react "16.0.0-alpha.12"
+                                                                              :create-react-class "15.6.0"}
                                                                    :closure-defines {"goog.DEBUG" false}}}

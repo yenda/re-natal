@@ -2,20 +2,19 @@
   (:require [reagent.core :as r :refer [atom]]
             [re-frame.core :refer [subscribe dispatch dispatch-sync]]
             [$PROJECT_NAME_HYPHENATED$.events]
-            [$PROJECT_NAME_HYPHENATED$.subs]))
+            [$PROJECT_NAME_HYPHENATED$.subs]
+            [react-native :as rn]))
 
-(def ReactNative (js/require "react-native"))
-
-(def app-registry (.-AppRegistry ReactNative))
-(def text (r/adapt-react-class (.-Text ReactNative)))
-(def view (r/adapt-react-class (.-View ReactNative)))
-(def image (r/adapt-react-class (.-Image ReactNative)))
-(def touchable-highlight (r/adapt-react-class (.-TouchableHighlight ReactNative)))
+(def app-registry rn/AppRegistry)
+(def text (r/adapt-react-class rn/Text))
+(def view (r/adapt-react-class rn/View))
+(def image (r/adapt-react-class rn/Image))
+(def touchable-highlight (r/adapt-react-class rn/TouchableHighlight))
 
 (def logo-img (js/require "./images/cljs.png"))
 
 (defn alert [title]
-      (.alert (.-Alert ReactNative) title))
+      (.alert rn/Alert title))
 
 (defn app-root []
   (let [greeting (subscribe [:get-greeting])]
