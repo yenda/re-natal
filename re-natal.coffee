@@ -845,22 +845,25 @@ useComponent = (name, platform) ->
   catch {message}
     logErr message
 
+logModuleDifferences = (platform, existingModules, newModules) ->
+  modules = new Set(existingModules)
+  diff = new Set(newModules.filter((m) -> !modules.has(m)))
+  if(diff.size isnt 0)
+    log "new #{platform} component import found #{Array.from(diff)}"
+
 inferComponents = () ->
   requiresByPlatform = buildRequireByPlatformMap()
 
-  allRequires = []
-  for k,v of requiresByPlatform
-    allRequires = Array.from(new Set(allRequires.concat(v)))
-
   config = readConfig() # re-natal file
-  modules = new Set(config.modules)
-  difference = new Set(Array.from(allRequires).filter((m) -> !modules.has(m)))
-  if(difference.size isnt 0)
-    log "new component import found #{Array.from(difference)}"
-    config.modules = Array.from(allRequires)
-    writeConfig(config)
-  else
-    log "no new component was imported, defaulting to #{Array.from(modules)}"
+  logModuleDifferences('common', config.modules, requiresByPlatform.common)
+  config.modules = requiresByPlatform.common
+
+  platforms = Object.keys config.platforms
+  for platform in platforms
+    logModuleDifferences(platform, config.platforms[platform].modules, requiresByPlatform[platform])
+    config.platforms[platform].modules = requiresByPlatform[platform]
+
+  writeConfig(config)
 
 autoRequire = (enabled) ->
   config = readConfig()
