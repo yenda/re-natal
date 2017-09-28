@@ -846,10 +846,17 @@ useComponent = (name, platform) ->
     logErr message
 
 logModuleDifferences = (platform, existingModules, newModules) ->
-  modules = new Set(existingModules)
-  diff = new Set(newModules.filter((m) -> !modules.has(m)))
-  if(diff.size isnt 0)
-    log "new #{platform} component import found #{Array.from(diff)}"
+  existingModuleSet = new Set(existingModules)
+  newModuleSet = new Set(newModules)
+
+  addedModules = new Set(newModules.filter((m) -> !existingModuleSet.has(m)))
+  removedModules = new Set(existingModules.filter((m) -> !newModuleSet.has(m)))
+
+  if(removedModules.size isnt 0)
+    log "removed #{platform} modules #{Array.from(removedModules)}"
+  if(addedModules.size isnt 0)
+    log "new #{platform} modules found #{Array.from(addedModules)}"
+
 
 inferComponents = () ->
   requiresByPlatform = buildRequireByPlatformMap()
@@ -937,12 +944,22 @@ cli.command 'use-ios-device <type>'
     configureDevHostForIosDevice type
 
 cli.command 'use-component <name> [<platform>]'
-  .description 'configures a custom component to work with figwheel. name is the value you pass to (js/require) function.'
+  .description 'configures a custom component to work with figwheel. Same as \'require\' command.'
+  .action (name, platform) ->
+    useComponent(name, platform)
+
+cli.command 'require <name> [<platform>]'
+  .description 'configures an external module to work with figwheel. name is the value you pass to (js/require) function.'
   .action (name, platform) ->
     useComponent(name, platform)
 
 cli.command 'infer-components'
-  .description 'parses all cljs files in this project, extracts all (js/require) components calls and uses them to populate the re-natal file'
+  .description 'parses all cljs files in this project, extracts all (js/require) calls and adds required modules to .re-natal file'
+  .action () ->
+    inferComponents()
+
+cli.command 'require-all'
+  .description 'parses all cljs files in this project, extracts all (js/require) calls and adds required modules to .re-natal file'
   .action () ->
     inferComponents()
 

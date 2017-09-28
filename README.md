@@ -245,13 +245,13 @@ This feature is available since re-natal@0.7.0
 
 #### Manually registering dependencies with use-component command
 
-You can register a single dependency manually by running `use-component` command:
+You can register a single dependency manually by running `require` command:
 ```
-$ re-natal use-component some-library/Component
+$ re-natal require some-library/Component
 ```
 or for a platform-specific component use the optional platform parameter:
 ```
-$ re-natal use-component some-library/ComponentIOS ios
+$ re-natal require some-library/ComponentIOS ios
 ```
 Then, regenerate index.*.js files:
 ```
@@ -262,6 +262,14 @@ Lastly, you will have to restart the packager and reload your app.
 NOTE: If you mistyped something, or no longer use the component and would like to remove it,
  manually open `.re-natal` and fix it there (it's just a list of names in JSON format, so the process should be straight forward).
 
+#### Scanning for dependencies with require-all command
+
+If you have used new modules in your code you can run: 
+```
+$ re-natal require-all
+```
+This will scan your code for `(js/require ...)` calls and add new required modules automatically.
+After this, you still need to run `use-figwheel` command to regenerate index.*.js files. 
 
 ## REPL
 You have to reload your app, and should see the REPL coming up with the prompt.
