@@ -237,26 +237,33 @@ writeConfig = (config) ->
 verifyConfig = (config) ->
   if !config.platforms? || !config.modules? || !config.imageDirs? || !config.interface? || !config.envRoots?
     throw new Error 're-natal project needs to be upgraded, please run: re-natal upgrade'
-
   config
 
-readConfig = (verify = true)->
+mergeConfigs = (config1, config2) ->
+  Object.assign(config1, config2);
+
+readConfig = (file = '.re-natal') ->
   try
-    config = JSON.parse readFile '.re-natal'
-    if (verify)
-      verifyConfig(config)
-    else
-      config
+    JSON.parse readFile file
   catch {message}
     logErr \
       if message.match /ENOENT/i
-        'No Re-Natal config was found in this directory (.re-natal)'
+        "No Re-Natal config was found in this directory (#{file})"
       else if message.match /EACCES/i
-        'No read permissions for .re-natal'
+        "No read permissions for #{file}"
       else if message.match /Unexpected/i
-        '.re-natal contains malformed JSON'
+        "#{file} contains malformed JSON"
       else
         message
+
+readAndVerifyConfig = (file) ->
+  verifyConfig readConfig file
+
+readLocalConfig = () ->
+  config = readConfig '.re-natal'
+  if fs.existsSync('.re-natal.local')
+    config = mergeConfigs(config, readConfig( '.re-natal.local'))
+  verifyConfig(config)
 
 scanImageDir = (dir) ->
   fnames = fs.readdirSync(dir)
@@ -295,7 +302,7 @@ resolveAndroidDevHost = (deviceType) ->
 configureDevHostForAndroidDevice = (deviceType) ->
   try
     devHost = resolveAndroidDevHost(deviceType)
-    config = readConfig()
+    config = readAndVerifyConfig()
     config.platforms.android.host = devHost
     writeConfig(config)
     log "Please run: re-natal use-figwheel to take effect."
@@ -316,7 +323,7 @@ resolveIosDevHost = (deviceType) ->
 configureDevHostForIosDevice = (deviceType) ->
   try
     devHost = resolveIosDevHost(deviceType)
-    config = readConfig()
+    config = readAndVerifyConfig()
     config.platforms.ios.host = devHost
     writeConfig(config)
     log "Please run: re-natal use-figwheel to take effect."
@@ -598,7 +605,7 @@ addPlatform = (platform) ->
     if !(platform of platformMeta)
       throw new Error "Unknown platform [#{platform}]"
 
-    config = readConfig()
+    config = readAndVerifyConfig()
     platforms = Object.keys config.platforms
 
     if platform in platforms
@@ -732,7 +739,7 @@ platformModulesAndImages = (config, platform) ->
 
 generateDevScripts = () ->
   try
-    config = readConfig()
+    config = readLocalConfig()
     platforms = Object.keys config.platforms
     projName = config.name
     devEnvRoot = config.envRoots.dev
@@ -829,7 +836,7 @@ doUpgrade = (config) ->
 
 useComponent = (name, platform) ->
   try
-    config = readConfig()
+    config = readAndVerifyConfig()
     platforms = Object.keys config.platforms
     if typeof platform isnt 'string'
       config.modules.push name
@@ -861,7 +868,7 @@ logModuleDifferences = (platform, existingModules, newModules) ->
 inferComponents = () ->
   requiresByPlatform = buildRequireByPlatformMap()
 
-  config = readConfig() # re-natal file
+  config = readAndVerifyConfig() # re-natal file
   logModuleDifferences('common', config.modules, requiresByPlatform.common)
   config.modules = requiresByPlatform.common
 
@@ -873,7 +880,7 @@ inferComponents = () ->
   writeConfig(config)
 
 autoRequire = (enabled) ->
-  config = readConfig()
+  config = readAndVerifyConfig()
   config.autoRequire = enabled
   writeConfig(config)
   if (enabled)
@@ -909,7 +916,7 @@ cli.command 'init <name>'
 cli.command 'upgrade'
 .description 'upgrades project files to current installed version of re-natal (the upgrade of re-natal itself is done via npm)'
 .action ->
-  doUpgrade readConfig(false)
+  doUpgrade readConfig()
 
 cli.command 'add-platform <platform>'
   .description 'adds additional app platform: \'windows\' - UWP app, \'wpf\' - WPF app'
@@ -921,7 +928,7 @@ cli.command 'xcode'
   .action ->
     ensureOSX ->
       ensureXcode ->
-        openXcode readConfig().name
+        openXcode readAndVerifyConfig().name
 
 cli.command 'deps'
   .description 'install all dependencies for the project'
@@ -981,7 +988,7 @@ cli.command 'disable-auto-require'
 cli.command 'copy-figwheel-bridge'
   .description 'copy figwheel-bridge.js into project'
   .action () ->
-    copyFigwheelBridge(readConfig(false).name)
+    copyFigwheelBridge(readConfig().name)
     log "Copied figwheel-bridge.js"
 
 cli.on '*', (command) ->
