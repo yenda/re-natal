@@ -15,6 +15,7 @@ cli     = require 'commander'
 chalk   = require 'chalk'
 semver  = require 'semver'
 ckDeps  = require 'check-dependencies'
+merge   = require 'deepmerge'
 pkgJson = require __dirname + '/package.json'
 
 nodeVersion     = pkgJson.engines.node
@@ -220,17 +221,16 @@ generateConfig = (interfaceName, projName) ->
       modules: []
 
   writeConfig config
-  config
 
-
-writeConfig = (config) ->
+writeConfig = (config, file = ".re-natal") ->
   try
-    fs.writeFileSync './.re-natal', JSON.stringify config, null, 2
+    fs.writeFileSync "./#{file}", JSON.stringify config, null, 2
+    config
   catch {message}
     logErr message
     logErr \
       if message.match /EACCES/i
-        'Invalid write permissions for creating .re-natal config file'
+        "Invalid write permissions for creating #{file} config file"
       else
         message
 
@@ -239,12 +239,12 @@ verifyConfig = (config) ->
     throw new Error 're-natal project needs to be upgraded, please run: re-natal upgrade'
   config
 
-mergeConfigs = (config1, config2) ->
-  Object.assign(config1, config2);
-
-readConfig = (file = '.re-natal') ->
+readConfig = (file = '.re-natal', mustExist = true, defaultValue = {}) ->
   try
-    JSON.parse readFile file
+    if (mustExist || fs.existsSync(file))
+      JSON.parse readFile file
+    else
+      defaultValue
   catch {message}
     logErr \
       if message.match /ENOENT/i
@@ -260,10 +260,9 @@ readAndVerifyConfig = (file) ->
   verifyConfig readConfig file
 
 readLocalConfig = () ->
-  config = readConfig '.re-natal'
-  if fs.existsSync('.re-natal.local')
-    config = mergeConfigs(config, readConfig( '.re-natal.local'))
-  verifyConfig(config)
+  global = readConfig '.re-natal'
+  local = readConfig '.re-natal.local', false
+  verifyConfig merge(global, local)
 
 scanImageDir = (dir) ->
   fnames = fs.readdirSync(dir)
@@ -299,12 +298,12 @@ resolveAndroidDevHost = (deviceType) ->
   else
     deviceTypeIsIpAddress(deviceType, Object.keys(allowedTypes))
 
-configureDevHostForAndroidDevice = (deviceType) ->
+configureDevHostForAndroidDevice = (deviceType, globally = false) ->
   try
+    configFile = if globally then '.re-natal' else '.re-natal.local'
     devHost = resolveAndroidDevHost(deviceType)
-    config = readAndVerifyConfig()
-    config.platforms.android.host = devHost
-    writeConfig(config)
+    config = merge(readConfig(configFile, false), platforms: android: host: devHost)
+    writeConfig(config, configFile)
     log "Please run: re-natal use-figwheel to take effect."
   catch {message}
     logErr message
@@ -320,12 +319,12 @@ resolveIosDevHost = (deviceType) ->
   else
     deviceTypeIsIpAddress(deviceType, ['simulator', 'real'])
 
-configureDevHostForIosDevice = (deviceType) ->
+configureDevHostForIosDevice = (deviceType, globally = false) ->
   try
+    configFile = if globally then '.re-natal' else '.re-natal.local'
     devHost = resolveIosDevHost(deviceType)
-    config = readAndVerifyConfig()
-    config.platforms.ios.host = devHost
-    writeConfig(config)
+    config = merge(readConfig(configFile, false), platforms: ios: host: devHost)
+    writeConfig(config, configFile)
     log "Please run: re-natal use-figwheel to take effect."
   catch {message}
     logErr message
@@ -942,13 +941,15 @@ cli.command 'use-figwheel'
 
 cli.command 'use-android-device <type>'
   .description 'sets up the host for android device type: \'real\' - localhost, \'avd\' - 10.0.2.2, \'genymotion\' - 10.0.3.2, IP'
-  .action (type) ->
-    configureDevHostForAndroidDevice type
+  .option '-g --global', 'use global .re-natal config intead of .re-natal.local'
+  .action (type, cmd) ->
+    configureDevHostForAndroidDevice type, cmd.global
 
 cli.command 'use-ios-device <type>'
   .description 'sets up the host for ios device type: \'simulator\' - localhost, \'real\' - auto detect IP on eth0, IP'
-  .action (type) ->
-    configureDevHostForIosDevice type
+  .option '-g --global', 'use global .re-natal config intead of .re-natal.local'
+  .action (type, cmd) ->
+    configureDevHostForIosDevice type, cmd.global
 
 cli.command 'use-component <name> [<platform>]'
   .description 'configures a custom component to work with figwheel. Same as \'require\' command.'
