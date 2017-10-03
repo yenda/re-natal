@@ -371,7 +371,8 @@ updateGitIgnore = () ->
 
   indexFiles = platforms.map (platform) -> "index.#{platform}.js"
   fs.appendFileSync(".gitignore", indexFiles.join("\n"))
-  fs.appendFileSync(".gitignore", "\ntarget/\n")
+  fs.appendFileSync(".gitignore", "\ntarget/")
+  fs.appendFileSync(".gitignore", "\n.re-natal.local\n")
 
   fs.appendFileSync(".gitignore", "\n# Figwheel\n#\nfigwheel_server.log")
 
