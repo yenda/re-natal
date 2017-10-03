@@ -7,7 +7,7 @@
                            [org.clojure/clojurescript "1.9.542"]
                            $INTERFACE_DEPS$]
             :plugins [[lein-cljsbuild "1.1.4"]
-                      [lein-figwheel "0.5.14-SNAPSHOT"]]
+                      [lein-figwheel "0.5.14"]]
             :clean-targets ["target/" #_($PLATFORM_CLEAN$)]
             :aliases {"prod-build" ^{:doc "Recompile code with prod profile."}
                                    ["do" "clean"
@@ -15,7 +15,7 @@
                       "advanced-build" ^{:doc "Recompile code for production using :advanced compilation."}
                                    ["do" "clean"
                                     ["with-profile" "advanced" "cljsbuild" "once"]]}
-            :profiles {:dev {:dependencies [[figwheel-sidecar "0.5.14-SNAPSHOT"]
+            :profiles {:dev {:dependencies [[figwheel-sidecar "0.5.14"]
                                             [com.cemerick/piggieback "0.2.1"]]
                              :source-paths ["src" "env/dev"]
                              :cljsbuild    {:builds [
