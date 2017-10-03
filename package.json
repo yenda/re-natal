@@ -12,7 +12,8 @@
     "commander": "^2.8.1",
     "fs-extra": "^0.26.5",
     "klaw-sync": "^2.1.0",
-    "semver": "^5.0.1"
+    "semver": "^5.0.1",
+    "deepmerge": "^1.5.2"
   },
   "engines": {
     "node": ">=4.0.0"

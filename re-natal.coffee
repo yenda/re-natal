@@ -15,6 +15,7 @@ cli     = require 'commander'
 chalk   = require 'chalk'
 semver  = require 'semver'
 ckDeps  = require 'check-dependencies'
+merge   = require 'deepmerge'
 pkgJson = require __dirname + '/package.json'
 
 nodeVersion     = pkgJson.engines.node
@@ -220,43 +221,48 @@ generateConfig = (interfaceName, projName) ->
       modules: []
 
   writeConfig config
-  config
 
-
-writeConfig = (config) ->
+writeConfig = (config, file = ".re-natal") ->
   try
-    fs.writeFileSync './.re-natal', JSON.stringify config, null, 2
+    fs.writeFileSync "./#{file}", JSON.stringify config, null, 2
+    config
   catch {message}
     logErr message
     logErr \
       if message.match /EACCES/i
-        'Invalid write permissions for creating .re-natal config file'
+        "Invalid write permissions for creating #{file} config file"
       else
         message
 
 verifyConfig = (config) ->
   if !config.platforms? || !config.modules? || !config.imageDirs? || !config.interface? || !config.envRoots?
     throw new Error 're-natal project needs to be upgraded, please run: re-natal upgrade'
-
   config
 
-readConfig = (verify = true)->
+readConfig = (file = '.re-natal', mustExist = true, defaultValue = {}) ->
   try
-    config = JSON.parse readFile '.re-natal'
-    if (verify)
-      verifyConfig(config)
+    if (mustExist || fs.existsSync(file))
+      JSON.parse readFile file
     else
-      config
+      defaultValue
   catch {message}
     logErr \
       if message.match /ENOENT/i
-        'No Re-Natal config was found in this directory (.re-natal)'
+        "No Re-Natal config was found in this directory (#{file})"
       else if message.match /EACCES/i
-        'No read permissions for .re-natal'
+        "No read permissions for #{file}"
       else if message.match /Unexpected/i
-        '.re-natal contains malformed JSON'
+        "#{file} contains malformed JSON"
       else
         message
+
+readAndVerifyConfig = (file) ->
+  verifyConfig readConfig file
+
+readLocalConfig = () ->
+  global = readConfig '.re-natal'
+  local = readConfig '.re-natal.local', false
+  verifyConfig merge(global, local)
 
 scanImageDir = (dir) ->
   fnames = fs.readdirSync(dir)
@@ -292,12 +298,12 @@ resolveAndroidDevHost = (deviceType) ->
   else
     deviceTypeIsIpAddress(deviceType, Object.keys(allowedTypes))
 
-configureDevHostForAndroidDevice = (deviceType) ->
+configureDevHostForAndroidDevice = (deviceType, globally = false) ->
   try
+    configFile = if globally then '.re-natal' else '.re-natal.local'
     devHost = resolveAndroidDevHost(deviceType)
-    config = readConfig()
-    config.platforms.android.host = devHost
-    writeConfig(config)
+    config = merge(readConfig(configFile, false), platforms: android: host: devHost)
+    writeConfig(config, configFile)
     log "Please run: re-natal use-figwheel to take effect."
   catch {message}
     logErr message
@@ -313,12 +319,12 @@ resolveIosDevHost = (deviceType) ->
   else
     deviceTypeIsIpAddress(deviceType, ['simulator', 'real'])
 
-configureDevHostForIosDevice = (deviceType) ->
+configureDevHostForIosDevice = (deviceType, globally = false) ->
   try
+    configFile = if globally then '.re-natal' else '.re-natal.local'
     devHost = resolveIosDevHost(deviceType)
-    config = readConfig()
-    config.platforms.ios.host = devHost
-    writeConfig(config)
+    config = merge(readConfig(configFile, false), platforms: ios: host: devHost)
+    writeConfig(config, configFile)
     log "Please run: re-natal use-figwheel to take effect."
   catch {message}
     logErr message
@@ -365,7 +371,8 @@ updateGitIgnore = () ->
 
   indexFiles = platforms.map (platform) -> "index.#{platform}.js"
   fs.appendFileSync(".gitignore", indexFiles.join("\n"))
-  fs.appendFileSync(".gitignore", "\ntarget/\n")
+  fs.appendFileSync(".gitignore", "\ntarget/")
+  fs.appendFileSync(".gitignore", "\n.re-natal.local\n")
 
   fs.appendFileSync(".gitignore", "\n# Figwheel\n#\nfigwheel_server.log")
 
@@ -598,7 +605,7 @@ addPlatform = (platform) ->
     if !(platform of platformMeta)
       throw new Error "Unknown platform [#{platform}]"
 
-    config = readConfig()
+    config = readAndVerifyConfig()
     platforms = Object.keys config.platforms
 
     if platform in platforms
@@ -674,11 +681,6 @@ updateFigwheelUrls = (devEnvRoot, devHost) ->
     mainDevPath = "#{devEnvRoot}/env/#{platform}/main.cljs"
     edit mainDevPath, [[figwheelUrlRx, "ws://#{devHost[platform]}:"]]
 
-# Current RN version (0.29.2) has no host in AppDelegate.m maybe docs are outdated?
-updateIosAppDelegate = (projName, iosHost) ->
-  appDelegatePath = "ios/#{projName}/AppDelegate.m"
-  edit appDelegatePath, [[appDelegateRx, "http://#{iosHost}"]]
-
 updateIosRCTWebSocketExecutor = (iosHost) ->
   RCTWebSocketExecutorPath = "node_modules/react-native/Libraries/WebSocket/RCTWebSocketExecutor.m"
   edit RCTWebSocketExecutorPath, [[debugHostRx, "host] ?: @\"#{iosHost}\";"]]
@@ -732,7 +734,7 @@ platformModulesAndImages = (config, platform) ->
 
 generateDevScripts = () ->
   try
-    config = readConfig()
+    config = readLocalConfig()
     platforms = Object.keys config.platforms
     projName = config.name
     devEnvRoot = config.envRoots.dev
@@ -829,7 +831,7 @@ doUpgrade = (config) ->
 
 useComponent = (name, platform) ->
   try
-    config = readConfig()
+    config = readAndVerifyConfig()
     platforms = Object.keys config.platforms
     if typeof platform isnt 'string'
       config.modules.push name
@@ -861,7 +863,7 @@ logModuleDifferences = (platform, existingModules, newModules) ->
 inferComponents = () ->
   requiresByPlatform = buildRequireByPlatformMap()
 
-  config = readConfig() # re-natal file
+  config = readAndVerifyConfig() # re-natal file
   logModuleDifferences('common', config.modules, requiresByPlatform.common)
   config.modules = requiresByPlatform.common
 
@@ -872,10 +874,10 @@ inferComponents = () ->
 
   writeConfig(config)
 
-autoRequire = (enabled) ->
-  config = readConfig()
-  config.autoRequire = enabled
-  writeConfig(config)
+autoRequire = (enabled, globally = false) ->
+  configFile = if globally then '.re-natal' else '.re-natal.local'
+  config = merge(readConfig(configFile, false), autoRequire: enabled)
+  writeConfig(config, configFile)
   if (enabled)
     log "Auto-Require feature is enabled in use-figwheel command"
   else
@@ -909,7 +911,7 @@ cli.command 'init <name>'
 cli.command 'upgrade'
 .description 'upgrades project files to current installed version of re-natal (the upgrade of re-natal itself is done via npm)'
 .action ->
-  doUpgrade readConfig(false)
+  doUpgrade readConfig()
 
 cli.command 'add-platform <platform>'
   .description 'adds additional app platform: \'windows\' - UWP app, \'wpf\' - WPF app'
@@ -921,7 +923,7 @@ cli.command 'xcode'
   .action ->
     ensureOSX ->
       ensureXcode ->
-        openXcode readConfig().name
+        openXcode readAndVerifyConfig().name
 
 cli.command 'deps'
   .description 'install all dependencies for the project'
@@ -935,13 +937,15 @@ cli.command 'use-figwheel'
 
 cli.command 'use-android-device <type>'
   .description 'sets up the host for android device type: \'real\' - localhost, \'avd\' - 10.0.2.2, \'genymotion\' - 10.0.3.2, IP'
-  .action (type) ->
-    configureDevHostForAndroidDevice type
+  .option '-g --global', 'use global .re-natal config instead of .re-natal.local'
+  .action (type, cmd) ->
+    configureDevHostForAndroidDevice type, cmd.global
 
 cli.command 'use-ios-device <type>'
   .description 'sets up the host for ios device type: \'simulator\' - localhost, \'real\' - auto detect IP on eth0, IP'
-  .action (type) ->
-    configureDevHostForIosDevice type
+  .option '-g --global', 'use global .re-natal config instead of .re-natal.local'
+  .action (type, cmd) ->
+    configureDevHostForIosDevice type, cmd.global
 
 cli.command 'use-component <name> [<platform>]'
   .description 'configures a custom component to work with figwheel. Same as \'require\' command.'
@@ -970,18 +974,20 @@ cli.command 'enable-source-maps'
 
 cli.command 'enable-auto-require'
   .description 'enables source scanning for automatic required module resolution in use-figwheel command.'
-  .action () ->
-    autoRequire(true)
+  .option '-g --global', 'use global .re-natal config instead of .re-natal.local'
+  .action (cmd) ->
+    autoRequire(true, cmd.global)
 
 cli.command 'disable-auto-require'
   .description 'disables auto-require feature in use-figwheel command'
-  .action () ->
-    autoRequire(false)
+  .option '-g --global', 'use global .re-natal config instead of .re-natal.local'
+  .action (cmd) ->
+    autoRequire(false, cmd.global)
 
 cli.command 'copy-figwheel-bridge'
   .description 'copy figwheel-bridge.js into project'
   .action () ->
-    copyFigwheelBridge(readConfig(false).name)
+    copyFigwheelBridge(readConfig().name)
     log "Copied figwheel-bridge.js"
 
 cli.on '*', (command) ->
