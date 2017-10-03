@@ -680,11 +680,6 @@ updateFigwheelUrls = (devEnvRoot, devHost) ->
     mainDevPath = "#{devEnvRoot}/env/#{platform}/main.cljs"
     edit mainDevPath, [[figwheelUrlRx, "ws://#{devHost[platform]}:"]]
 
-# Current RN version (0.29.2) has no host in AppDelegate.m maybe docs are outdated?
-updateIosAppDelegate = (projName, iosHost) ->
-  appDelegatePath = "ios/#{projName}/AppDelegate.m"
-  edit appDelegatePath, [[appDelegateRx, "http://#{iosHost}"]]
-
 updateIosRCTWebSocketExecutor = (iosHost) ->
   RCTWebSocketExecutorPath = "node_modules/react-native/Libraries/WebSocket/RCTWebSocketExecutor.m"
   edit RCTWebSocketExecutorPath, [[debugHostRx, "host] ?: @\"#{iosHost}\";"]]
