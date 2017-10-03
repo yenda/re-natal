@@ -878,10 +878,10 @@ inferComponents = () ->
 
   writeConfig(config)
 
-autoRequire = (enabled) ->
-  config = readAndVerifyConfig()
-  config.autoRequire = enabled
-  writeConfig(config)
+autoRequire = (enabled, globally = false) ->
+  configFile = if globally then '.re-natal' else '.re-natal.local'
+  config = merge(readConfig(configFile, false), autoRequire: enabled)
+  writeConfig(config, configFile)
   if (enabled)
     log "Auto-Require feature is enabled in use-figwheel command"
   else
@@ -941,13 +941,13 @@ cli.command 'use-figwheel'
 
 cli.command 'use-android-device <type>'
   .description 'sets up the host for android device type: \'real\' - localhost, \'avd\' - 10.0.2.2, \'genymotion\' - 10.0.3.2, IP'
-  .option '-g --global', 'use global .re-natal config intead of .re-natal.local'
+  .option '-g --global', 'use global .re-natal config instead of .re-natal.local'
   .action (type, cmd) ->
     configureDevHostForAndroidDevice type, cmd.global
 
 cli.command 'use-ios-device <type>'
   .description 'sets up the host for ios device type: \'simulator\' - localhost, \'real\' - auto detect IP on eth0, IP'
-  .option '-g --global', 'use global .re-natal config intead of .re-natal.local'
+  .option '-g --global', 'use global .re-natal config instead of .re-natal.local'
   .action (type, cmd) ->
     configureDevHostForIosDevice type, cmd.global
 
@@ -978,13 +978,15 @@ cli.command 'enable-source-maps'
 
 cli.command 'enable-auto-require'
   .description 'enables source scanning for automatic required module resolution in use-figwheel command.'
-  .action () ->
-    autoRequire(true)
+  .option '-g --global', 'use global .re-natal config instead of .re-natal.local'
+  .action (cmd) ->
+    autoRequire(true, cmd.global)
 
 cli.command 'disable-auto-require'
   .description 'disables auto-require feature in use-figwheel command'
-  .action () ->
-    autoRequire(false)
+  .option '-g --global', 'use global .re-natal config instead of .re-natal.local'
+  .action (cmd) ->
+    autoRequire(false, cmd.global)
 
 cli.command 'copy-figwheel-bridge'
   .description 'copy figwheel-bridge.js into project'
