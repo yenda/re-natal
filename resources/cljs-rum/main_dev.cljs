@@ -1,6 +1,6 @@
 (ns ^:figwheel-no-load env.$PLATFORM$.main
   (:require [$PROJECT_NAME_HYPHENATED$.$PLATFORM$.core :as core]
-            [figwheel.client :as figwheel :include-macros true]))
+            [figwheel.client :as fw]))
 
 (assert (exists? core/init) "Fatal Error - Your core.cljs file doesn't define an 'init' function!!! - Perhaps there was a compilation failure?")
 (assert (exists? core/root-component-factory) "Fatal Error - Your core.cljs file doesn't define an 'root-component-factory' function!!! - Perhaps there was a compilation failure?")
@@ -8,11 +8,11 @@
 
 (enable-console-print!)
 
-(figwheel/watch-and-reload
-  :websocket-url "ws://localhost:3449/figwheel-ws"
-  :heads-up-display false
-  ;; TODO make this Rum something
-  :jsload-callback #(#'core/mount-app))
+(fw/start {
+           :websocket-url    "ws://$DEV_HOST$:3449/figwheel-ws"
+           :heads-up-display false
+           ;; TODO make this Rum something
+           :jsload-callback  #(#'core/mount-app)})
 
 (core/init)
 
