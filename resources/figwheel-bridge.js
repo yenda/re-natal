@@ -190,7 +190,7 @@ function loadApp(platform, devHost, onLoadCb) {
     var fileBasePath = serverBaseUrl((isChrome() ? "localhost" : devHost)) + "/" + config.basePath + platform;
 
     // callback when app is ready to get the reloadable component
-    var mainJs = '/figwheel/connect/build_' + platform + '.js';
+    var mainJs = `/env/${platform}/main.js`;
     evalListeners.waitForFinalEval = function (url) {
         if (url.indexOf(mainJs) > -1) {
 	    assertRootElExists(platform);
@@ -212,7 +212,7 @@ function loadApp(platform, devHost, onLoadCb) {
                 // seriously React packager? why.
                 var googreq = goog.require;
 
-                googreq('figwheel.connect.build_' + platform);
+                googreq(`env.${platform}.main`);
             });
         });
     }
