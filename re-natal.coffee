@@ -16,6 +16,7 @@ chalk   = require 'chalk'
 semver  = require 'semver'
 ckDeps  = require 'check-dependencies'
 merge   = require 'deepmerge'
+hb      = require 'handlebars'
 pkgJson = require __dirname + '/package.json'
 
 nodeVersion     = pkgJson.engines.node
@@ -29,10 +30,7 @@ interfaceDepsRx = /\$INTERFACE_DEPS\$/g
 platformRx      = /\$PLATFORM\$/g
 platformCleanRx = /#_\(\$PLATFORM_CLEAN\$\)/g
 platformCleanId = "#_($PLATFORM_CLEAN$)"
-devHostRx       = /\$DEV_HOST\$/g
 ipAddressRx     = /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/i
-figwheelUrlRx   = /ws:\/\/[0-9a-zA-Z\.]*:/g
-appDelegateRx   = /http:\/\/[^:]+/g
 debugHostRx     = /host]\s+\?:\s+@".*";/g
 namespaceRx     = /\(ns\s+([A-Za-z0-9.-]+)/g
 jsRequireRx     = /js\/require "(.+)"/g
@@ -337,19 +335,23 @@ deviceTypeIsIpAddress = (deviceType, allowedTypes) ->
     log("Value '#{deviceType}' is not a valid IP address, still configured it as development host. Did you mean one of: [#{allowedTypes}] ?", 'yellow')
     deviceType
 
-copyDevEnvironmentFilesForPlatform = (platform, interfaceName, projNameHyph, projName, devEnvRoot, devHost) ->
+copyDevEnvironmentFilesForPlatform = (platform, interfaceName, projNameHyph, projName, devEnvRoot) ->
   cljsDir = interfaceConf[interfaceName].cljsDir
   fs.mkdirpSync "#{devEnvRoot}/env/#{platform}"
   mainDevPath = "#{devEnvRoot}/env/#{platform}/main.cljs"
   fs.copySync("#{resources}/#{cljsDir}/main_dev.cljs", mainDevPath)
-  edit mainDevPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName], [platformRx, platform], [devHostRx, devHost]]
+  edit mainDevPath, [[projNameHyphRx, projNameHyph], [projNameRx, projName], [platformRx, platform]]
 
-copyDevEnvironmentFiles = (interfaceName, projNameHyph, projName, devEnvRoot, devHost) ->
+generateConfigNs = (config) ->
+  template = hb.compile(readFile "#{resources}/config.cljs")
+  fs.writeFileSync("#{config.envRoots.dev}/env/config.cljs", template(config))
+
+copyDevEnvironmentFiles = (interfaceName, projNameHyph, projName, devEnvRoot) ->
   userNsPath = "#{devEnvRoot}/user.clj"
   fs.copySync("#{resources}/user.clj", userNsPath)
 
   for platform in platforms
-    copyDevEnvironmentFilesForPlatform platform, interfaceName, projNameHyph, projName, devEnvRoot, devHost
+    copyDevEnvironmentFilesForPlatform platform, interfaceName, projNameHyph, projName, devEnvRoot
 
 copyProdEnvironmentFilesForPlatform = (platform, interfaceName, projNameHyph, projName, prodEnvRoot) ->
   cljsDir = interfaceConf[interfaceName].cljsDir
@@ -372,7 +374,8 @@ updateGitIgnore = () ->
   indexFiles = platforms.map (platform) -> "index.#{platform}.js"
   fs.appendFileSync(".gitignore", indexFiles.join("\n"))
   fs.appendFileSync(".gitignore", "\ntarget/")
-  fs.appendFileSync(".gitignore", "\n.re-natal.local\n")
+  fs.appendFileSync(".gitignore", "\n.re-natal.local")
+  fs.appendFileSync(".gitignore", "\nenv/dev/env/config.cljs\n")
 
   fs.appendFileSync(".gitignore", "\n# Figwheel\n#\nfigwheel_server.log")
 
@@ -516,7 +519,7 @@ init = (interfaceName, projName) ->
 
     copySrcFiles(interfaceName, projName, projNameUs, projNameHyph)
 
-    copyDevEnvironmentFiles(interfaceName, projNameHyph, projName, defaultEnvRoots.dev, "localhost")
+    copyDevEnvironmentFiles(interfaceName, projNameHyph, projName, defaultEnvRoots.dev)
     copyProdEnvironmentFiles(interfaceName, projNameHyph, projName, defaultEnvRoots.prod)
 
     fs.copySync("#{resources}/images", "./images")
@@ -560,7 +563,8 @@ init = (interfaceName, projName) ->
 
     updateGitIgnore()
 
-    generateConfig(interfaceName, projName)
+    config = generateConfig(interfaceName, projName)
+    generateConfigNs(config);
 
     copyFigwheelBridge(projNameUs)
 
@@ -620,7 +624,7 @@ addPlatform = (platform) ->
 
       updateProjectClj(platform)
       copySrcFilesForPlatform(platform, interfaceName, projName, projNameUs, projNameHyph)
-      copyDevEnvironmentFilesForPlatform(platform, interfaceName, projNameHyph, projName, defaultEnvRoots.dev, "localhost")
+      copyDevEnvironmentFilesForPlatform(platform, interfaceName, projNameHyph, projName, defaultEnvRoots.dev)
       copyProdEnvironmentFilesForPlatform(platform, interfaceName, projNameHyph, projName, defaultEnvRoots.prod)
 
       pkg = JSON.parse readFile 'package.json'
@@ -647,6 +651,7 @@ addPlatform = (platform) ->
       config.platforms[platform] =
         host: "localhost"
         modules: []
+      generateConfigNs(config)
 
       writeConfig(config)
 
@@ -675,11 +680,6 @@ generateRequireModulesCode = (modules) ->
   for m in modules
     jsCode += "modules['#{m}']=require('#{m}');";
   jsCode += '\n'
-
-updateFigwheelUrls = (devEnvRoot, devHost) ->
-  for platform in platforms
-    mainDevPath = "#{devEnvRoot}/env/#{platform}/main.cljs"
-    edit mainDevPath, [[figwheelUrlRx, "ws://#{devHost[platform]}:"]]
 
 updateIosRCTWebSocketExecutor = (iosHost) ->
   RCTWebSocketExecutorPath = "node_modules/react-native/Libraries/WebSocket/RCTWebSocketExecutor.m"
@@ -737,7 +737,6 @@ generateDevScripts = () ->
     config = readLocalConfig()
     platforms = Object.keys config.platforms
     projName = config.name
-    devEnvRoot = config.envRoots.dev
 
     if isSomeDepsMissing()
       installDeps(verbose: true)
@@ -757,11 +756,10 @@ generateDevScripts = () ->
       fs.writeFileSync "index.#{platform}.js", "#{moduleMap}require('figwheel-bridge').withModules(modules).start('#{projName}','#{platform}','#{devHost[platform]}');"
       log "index.#{platform}.js was regenerated"
 
-    #updateIosAppDelegate(projName, devHost.ios)
     updateIosRCTWebSocketExecutor(devHost.ios)
     log "Host in RCTWebSocketExecutor.m was updated"
 
-    updateFigwheelUrls(devEnvRoot, devHost)
+    generateConfigNs(config);
     for platform in platforms
       log "Dev server host for #{platformMeta[platform].name}: #{devHost[platform]}"
 
@@ -821,8 +819,9 @@ doUpgrade = (config) ->
   interfaceName = config.interface
   envRoots = config.envRoots
 
-  copyDevEnvironmentFiles(interfaceName, projNameHyph, projName, envRoots.dev, "localhost")
+  copyDevEnvironmentFiles(interfaceName, projNameHyph, projName, envRoots.dev)
   copyProdEnvironmentFiles(interfaceName, projNameHyph, projName, envRoots.prod)
+  generateConfigNs(config);
   log "upgraded files in #{envRoots.dev} and #{envRoots.prod} "
 
   copyFigwheelBridge(projNameUs)

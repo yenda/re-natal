@@ -2,7 +2,8 @@
   (:require [reagent.core :as r]
             [re-frame.core :refer [clear-subscription-cache!]]
             [$PROJECT_NAME_HYPHENATED$.$PLATFORM$.core :as core]
-            [figwheel.client :as fw]))
+            [figwheel.client :as fw]
+            [env.config :as conf]))
 
 (enable-console-print!)
 
@@ -20,7 +21,7 @@
       (swap! cnt inc))
 
 (fw/start {
-           :websocket-url    "ws://$DEV_HOST$:3449/figwheel-ws"
+           :websocket-url    (:$PLATFORM$ conf/figwheel-urls)
            :heads-up-display false
            :jsload-callback  force-reload!})
 
