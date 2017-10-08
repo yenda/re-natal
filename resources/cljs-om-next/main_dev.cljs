@@ -2,7 +2,8 @@
   (:require [om.next :as om]
             [$PROJECT_NAME_HYPHENATED$.$PLATFORM$.core :as core]
             [$PROJECT_NAME_HYPHENATED$.state :as state]
-            [figwheel.client :as fw]))
+            [figwheel.client :as fw]
+            [env.config :as conf]))
 
 (enable-console-print!)
 
@@ -10,7 +11,7 @@
 (assert (exists? core/app-root) "Fatal Error - Your core.cljs file doesn't define an 'app-root' function!!! - Perhaps there was a compilation failure?")
 
 (fw/start {
-           :websocket-url    "ws://$DEV_HOST$:3449/figwheel-ws"
+           :websocket-url    (:$PLATFORM$ conf/figwheel-urls)
            :heads-up-display false
            :jsload-callback  #(om/add-root! state/reconciler core/AppRoot 1)})
 
