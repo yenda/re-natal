@@ -1,10 +1,10 @@
- (ns ^:figwheel-no-load env.$PLATFORM$.main
+(ns ^:figwheel-no-load env.$PLATFORM$.main
   (:require [reagent.core :as r]
             [re-frame.core :refer [clear-subscription-cache!]]
             [$PROJECT_NAME_HYPHENATED$.$PLATFORM$.core :as core]
-            [figwheel.client :as figwheel :include-macros true]))
+            [figwheel.client :as fw]))
 
- (enable-console-print!)
+(enable-console-print!)
 
 (assert (exists? core/init) "Fatal Error - Your core.cljs file doesn't define an 'init' function!!! - Perhaps there was a compilation failure?")
 (assert (exists? core/app-root) "Fatal Error - Your core.cljs file doesn't define an 'app-root' function!!! - Perhaps there was a compilation failure?")
@@ -16,12 +16,12 @@
 (def root-el (r/as-element [reloader]))
 
 (defn force-reload! []
-  (clear-subscription-cache!)
-  (swap! cnt inc))
+      (clear-subscription-cache!)
+      (swap! cnt inc))
 
-(figwheel/watch-and-reload
- :websocket-url "ws://$DEV_HOST$:3449/figwheel-ws"
- :heads-up-display false
- :jsload-callback force-reload!)
+(fw/start {
+           :websocket-url    "ws://$DEV_HOST$:3449/figwheel-ws"
+           :heads-up-display false
+           :jsload-callback  force-reload!})
 
 (core/init)
