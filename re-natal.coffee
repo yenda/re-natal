@@ -818,6 +818,7 @@ doUpgrade = (config) ->
 
   interfaceName = config.interface
   envRoots = config.envRoots
+  platforms = Object.keys config.platforms ## hack!!! TDOD: remove global platforms
 
   copyDevEnvironmentFiles(interfaceName, projNameHyph, projName, envRoots.dev)
   copyProdEnvironmentFiles(interfaceName, projNameHyph, projName, envRoots.prod)
