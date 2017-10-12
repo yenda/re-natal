@@ -273,7 +273,7 @@ scanImageDir = (dir, platforms) ->
   dirs = fs.readdirSync(dir)
     .map (fname) -> "#{dir}/#{fname}"
     .filter (path) -> fs.statSync(path).isDirectory()
-  fnames.concat scanImages(dirs)
+  fnames.concat scanImages(dirs, platforms)
 
 removeExcludeFiles = (file) ->
     excludedFileNames = [".DS_Store"]
