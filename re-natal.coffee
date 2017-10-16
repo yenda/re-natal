@@ -34,7 +34,7 @@ ipAddressRx     = /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/i
 debugHostRx     = /host]\s+\?:\s+@".*";/g
 namespaceRx     = /\(ns\s+([A-Za-z0-9.-]+)/g
 jsRequireRx     = /js\/require "(.+)"/g
-rnVersion       = '0.48.4'
+rnVersion       = '0.49.3'
 rnWinVersion    = '0.48.0-rc.4'
 rnPackagerPort  = 8081
 process.title   = 're-natal'
@@ -486,6 +486,20 @@ updateProjectClj = (platform) ->
     [buildProfiles.advanced.profilesRx, builds.advanced]
   ]
 
+enablePlatformSpecificIndexJs = (projName) ->
+  fs.unlinkSync 'App.js'
+  fs.unlinkSync 'app.json'
+  fs.unlinkSync 'index.js'
+
+  appDelegatePath = "ios/#{projName}/AppDelegate.m"
+  edit appDelegatePath, [[/jsBundleURLForBundleRoot:@"index"/g, "jsBundleURLForBundleRoot:@\"index.ios\""]]
+
+  buildGradlePath = "android/app/build.gradle"
+  edit buildGradlePath, [[/project\.ext\.react\s+=\s+\[\s+.*\s+]/g, ""]]
+
+  mainApplicationPath = "android/app/src/main/java/com/#{projName.toLowerCase()}/MainApplication.java"
+  edit mainApplicationPath, [[/@Override\s+.*getJSMainModuleName.*\s+.*\s+}/g, ""]]
+
 init = (interfaceName, projName, platforms) ->
   if projName.toLowerCase() is 'react' or !projName.match validNameRx
     logErr 'Invalid project name. Use an alphanumeric CamelCase name.'
@@ -547,6 +561,8 @@ init = (interfaceName, projName, platforms) ->
     exec "node -e
            \"require('react-native/local-cli/cli').init('.', '#{projName}')\"
            "
+
+    enablePlatformSpecificIndexJs(projName)
 
     if 'windows' in platforms
       log 'Creating React Native UWP project.'
