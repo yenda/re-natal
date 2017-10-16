@@ -35,7 +35,7 @@ debugHostRx     = /host]\s+\?:\s+@".*";/g
 namespaceRx     = /\(ns\s+([A-Za-z0-9.-]+)/g
 jsRequireRx     = /js\/require "(.+)"/g
 rnVersion       = '0.49.3'
-rnWinVersion    = '0.48.0-rc.4'
+rnWinVersion    = '0.49.0-rc.2'
 rnPackagerPort  = 8081
 process.title   = 're-natal'
 buildProfiles     =
@@ -486,7 +486,8 @@ updateProjectClj = (platform) ->
     [buildProfiles.advanced.profilesRx, builds.advanced]
   ]
 
-enablePlatformSpecificIndexJs = (projName) ->
+generateReactNativeProject = (projName) ->
+  exec "node -e \"require('react-native/local-cli/cli').init('.', '#{projName}')\""
   fs.unlinkSync 'App.js'
   fs.unlinkSync 'app.json'
   fs.unlinkSync 'index.js'
@@ -499,6 +500,22 @@ enablePlatformSpecificIndexJs = (projName) ->
 
   mainApplicationPath = "android/app/src/main/java/com/#{projName.toLowerCase()}/MainApplication.java"
   edit mainApplicationPath, [[/@Override\s+.*getJSMainModuleName.*\s+.*\s+}/g, ""]]
+
+generateWindowsProject = (projName) ->
+  log 'Creating React Native windows project.'
+  exec "node -e \"require('react-native-windows/local-cli/generate-windows')('.', '#{projName}', '#{projName}')\""
+  fs.unlinkSync 'App.windows.js'
+
+  appReactPagePath = "windows/#{projName}/MainPage.cs"
+  edit appReactPagePath, [[/public.*JavaScriptMainModuleName(.*\s+){4}return\s+"index";(\s+.*){2}/g, ""]]
+
+generateWpfProject = (projName) ->
+  log 'Creating React Native WPF project.'
+  exec "node -e \"require('react-native-windows/local-cli/generate-wpf')('.', '#{projName}', '#{projName}')\""
+  fs.unlinkSync 'App.windows.js'
+
+  appReactPagePath = "wpf/#{projName}/AppReactPage.cs"
+  edit appReactPagePath, [[/public.*JavaScriptMainModuleName.*;/g, "public override string JavaScriptMainModuleName => \"index.wpf\";"]]
 
 init = (interfaceName, projName, platforms) ->
   if projName.toLowerCase() is 'react' or !projName.match validNameRx
@@ -558,23 +575,14 @@ init = (interfaceName, projName, platforms) ->
     installDeps()
 
     fs.unlinkSync '.gitignore'
-    exec "node -e
-           \"require('react-native/local-cli/cli').init('.', '#{projName}')\"
-           "
 
-    enablePlatformSpecificIndexJs(projName)
+    generateReactNativeProject(projName)
 
     if 'windows' in platforms
-      log 'Creating React Native UWP project.'
-      exec "node -e
-             \"require('react-native-windows/local-cli/generate-windows')('.', '#{projName}', '#{projName}')\"
-             "
+      generateWindowsProject(projName)
 
     if 'wpf' in platforms
-      log 'Creating React Native WPF project.'
-      exec "node -e
-             \"require('react-native-windows/local-cli/generate-wpf')('.', '#{projName}', '#{projName}')\"
-             "
+      generateWpfProject(projName)
 
     updateGitIgnore(platforms)
 
@@ -650,16 +658,10 @@ addPlatform = (platform) ->
         installDeps()
 
       if platform is 'windows'
-        log 'Creating React Native UWP project.'
-        exec "node -e
-               \"require('react-native-windows/local-cli/generate-windows')('.', '#{projName}', '#{projName}')\"
-               "
+        generateWindowsProject(projName)
 
       if platform is 'wpf'
-        log 'Creating React Native WPF project.'
-        exec "node -e
-               \"require('react-native-windows/local-cli/generate-wpf')('.', '#{projName}', '#{projName}')\"
-               "
+        generateWpfProject(projName)
 
       fs.appendFileSync(".gitignore", "\n\nindex.#{platform}.js\n")
 
