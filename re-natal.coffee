@@ -983,9 +983,9 @@ cli.command 'require-all'
     inferComponents()
 
 cli.command 'enable-source-maps'
-.description 'patches RN packager to server *.map files from filesystem, so that chrome can download them.'
-.action () ->
-  patchReactNativePackager()
+  .description 'patches RN packager to server *.map files from filesystem, so that chrome can download them.'
+  .action () ->
+    patchReactNativePackager()
 
 cli.command 'enable-auto-require'
   .description 'enables source scanning for automatic required module resolution in use-figwheel command.'
