@@ -751,9 +751,14 @@ generateDevScripts = () ->
     if config.autoRequire? and config.autoRequire
       log 'Auto-require is enabled. Scanning for require() calls in *.cljs files...'
 
+    if config.shims? and config.shims
+      shims = "import \"./shim\";"
+    else
+      shims = ""
+
     for platform in platforms
       moduleMap = generateRequireModulesCode(platformModulesAndImages(config, platform))
-      fs.writeFileSync "index.#{platform}.js", "#{moduleMap}require('figwheel-bridge').withModules(modules).start('#{projName}','#{platform}','#{devHost[platform]}');"
+      fs.writeFileSync "index.#{platform}.js", "#{shims}#{moduleMap}require('figwheel-bridge').withModules(modules).start('#{projName}','#{platform}','#{devHost[platform]}');"
       log "index.#{platform}.js was regenerated"
 
     updateIosRCTWebSocketExecutor(devHost.ios)
